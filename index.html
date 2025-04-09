@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherFlow - AI Prompt Management Chrome Extension</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>AetherFlow</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="terms-of-service.html">Terms</a></li>
+                    <li><a href="privacy-policy.html">Privacy</a></li>
+                    <li><a href="refund-policy.html">Refunds</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Master Your AI Prompts</h1>
+                <p>AetherFlow helps you store, organize, and optimize your AI prompts for better results with any AI platform</p>
+                <div class="hero-buttons">
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-primary">Add to Chrome</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/hero-image.png" alt="AetherFlow Chrome Extension" class="primary-image">
+            </div>
+        </div>
+    </section>
+
+    <section class="video-section">
+        <div class="container">
+            <h2>See AetherFlow in Action</h2>
+            <div class="video-container">
+                <div class="video-placeholder" onclick="playDemo()">
+                    <img src="assets/video-thumbnail.png" alt="Demo video thumbnail">
+                    <div class="play-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Features That Set Us Apart</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3>Prompt Library</h3>
+                    <p>Store and organize your best prompts in a searchable library for quick access anytime.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <path d="M2 17l10 5 10-5"></path>
+                            <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <h3>AI Optimization</h3>
+                    <p>Analyze and improve your prompts using our AI algorithm for better results.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                    </div>
+                    <h3>Quick Input</h3>
+                    <p>Use keyboard shortcuts to instantly insert your saved prompts into any text field.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h3>Cross-device Sync</h3>
+                    <p>Access your prompt library from any device with seamless cloud synchronization.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="container">
+            <h2>How AetherFlow Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Save Your Prompts</h3>
+                    <p>Capture your most effective AI prompts from any website with one click.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Optimize & Refine</h3>
+                    <p>Use our AI-powered tools to analyze and improve your prompt effectiveness.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Reuse Instantly</h3>
+                    <p>Insert your saved prompts anywhere with simple keyboard shortcuts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="plans">
+        <div class="container">
+            <h2>Choose Your Plan</h2>
+            <p class="subtitle">Find the right solution for your needs</p>
+            <div class="pricing-cards">
+                <div class="pricing-card free">
+                    <div class="card-header">
+                        <h3>Free</h3>
+                        <div class="price">$0</div>
+                        <p>Forever</p>
+                    </div>
+                    <div class="card-features">
+                        <ul>
+                            <li>Store up to 5 prompts</li>
+                            <li>3 optimization attempts daily</li>
+                            <li>Basic features access</li>
+                            <li>Single device usage</li>
+                        </ul>
+                    </div>
+                    <div class="card-action">
+                        <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-outline">Get Started</a>
+                    </div>
+                </div>
+                <div class="pricing-card premium">
+                    <div class="most-popular">Most Popular</div>
+                    <div class="card-header">
+                        <h3>Pro</h3>
+                        <div class="price">$4.99</div>
+                        <p>per month</p>
+                    </div>
+                    <div class="card-features">
+                        <ul>
+                            <li>Store up to 100 prompts</li>
+                            <li>50 optimization attempts daily</li>
+                            <li>All advanced features</li>
+                            <li>Multi-device sync</li>
+                            <li>Priority support</li>
+                        </ul>
+                    </div>
+                    <div class="card-action">
+                        <a href="pricing.html" class="btn btn-primary">Upgrade Now</a>
+                    </div>
+                </div>
+                <div class="pricing-card annual">
+                    <div class="best-value">Best Value</div>
+                    <div class="card-header">
+                        <h3>Annual</h3>
+                        <div class="price">$39.99</div>
+                        <p>per year (Save 33%)</p>
+                    </div>
+                    <div class="card-features">
+                        <ul>
+                            <li>All Pro features</li>
+                            <li>2 months free</li>
+                            <li>Early access to new features</li>
+                        </ul>
+                    </div>
+                    <div class="card-action">
+                        <a href="pricing.html" class="btn btn-primary">Upgrade Now</a>
+                    </div>
+                </div>
+            </div>
+            <p class="subscription-note">All subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period. You can manage your subscription in your account settings.</p>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <h2>What Our Users Say</h2>
+            <div class="testimonial-slider">
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"AetherFlow has transformed how I interact with AI platforms. My prompts are more effective and I save hours every week."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-name">Sarah J.</div>
+                        <div class="author-title">Content Creator</div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"The prompt optimization feature alone is worth the subscription. I get better AI responses with much less effort."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-name">Michael T.</div>
+                        <div class="author-title">Software Developer</div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <p>"Being able to sync my prompts across devices has been a game-changer for my workflow."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-name">Jessica L.</div>
+                        <div class="author-title">Digital Marketer</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Transform Your AI Experience?</h2>
+            <p>Join thousands of users who are getting better results with AetherFlow</p>
+            <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-large">Add to Chrome - It's Free</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AetherFlow</h2>
+                    <p>AI Prompt Management Chrome Extension</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="refund-policy.html">Refund Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id">Chrome Store</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p>Email: support@aetherflow.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 AetherFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加视频播放事件监听器
+            const videoPlaceholder = document.querySelector('.video-placeholder');
+            if (videoPlaceholder) {
+                videoPlaceholder.addEventListener('click', playDemo);
+            }
+        });
+
+        function playDemo() {
+            const videoContainer = document.querySelector('.video-container');
+            // 替换视频容器内容为YouTube嵌入式播放器
+            videoContainer.innerHTML = '<div class="embed-responsive"><iframe width="100%" height="450" src="https://www.youtube.com/embed/vSwZ517-0Wg?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+        }
+    </script>
+</body>
+</html> 
