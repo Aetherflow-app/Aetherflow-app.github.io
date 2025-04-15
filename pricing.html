@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Paddle Billing JS 集成 -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" async defer></script>
+    <!-- 同步加载Paddle脚本，确保正确初始化 -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
 <body>
     <header>
@@ -319,35 +319,50 @@
                 });
             });
             
-            // 确认 DOM 完全加载后才初始化 Paddle Billing
-            setTimeout(() => {
-                console.log('DOM is fully loaded, initializing Paddle Billing...');
-                // 确保Paddle.js加载完成，然后初始化
-                ensurePaddleScriptLoaded()
-                    .then(() => {
-                        console.log('Paddle.js is ready, initializing...');
-                        initializePaddleBilling();
-                    })
-                    .catch(error => {
-                        console.error('Failed to initialize Paddle:', error);
-                        // 显示用户友好的错误信息
-                        const errorContainer = document.createElement('div');
-                        errorContainer.className = 'paddle-error-notice';
-                        errorContainer.style.color = 'red';
-                        errorContainer.style.padding = '10px';
-                        errorContainer.style.margin = '10px 0';
-                        errorContainer.style.border = '1px solid red';
-                        errorContainer.style.borderRadius = '4px';
-                        errorContainer.style.backgroundColor = '#fff8f8';
-                        errorContainer.textContent = 'The payment system is currently unavailable. Please try again later or contact support.';
-                        
-                        // 插入到页面中
-                        const pricingCards = document.querySelector('.pricing-cards-container');
-                        if (pricingCards) {
-                            pricingCards.insertBefore(errorContainer, pricingCards.firstChild);
-                        }
-                    });
-            }, 500);
+            // Paddle初始化 - 极简版本
+            try {
+                console.log('Initializing Paddle...');
+                
+                // 检查是否是沙盒环境
+                const urlParams = new URLSearchParams(window.location.search);
+                const isSandbox = urlParams.has('paddle_env') && urlParams.get('paddle_env') === 'sandbox';
+                
+                // 设置沙盒环境（仅当需要时）
+                if (isSandbox) {
+                    console.log('Setting sandbox environment');
+                    Paddle.Environment.set('sandbox');
+                }
+                
+                // 初始化Paddle - 最基本的方法
+                Paddle.Initialize({
+                    token: isSandbox 
+                        ? 'test_c624a7a4c9993fc8965d9c37db6'  // 沙盒令牌
+                        : 'live_74080bad93a7d3b962f98a52c93'  // 生产令牌
+                });
+                
+                console.log('Paddle initialized successfully');
+                
+                // 沙盒模式指示器
+                if (isSandbox) {
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = `
+                        position: fixed;
+                        bottom: 10px;
+                        left: 10px;
+                        background-color: #ff9800;
+                        color: white;
+                        padding: 5px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        z-index: 9999;
+                    `;
+                    indicator.textContent = '🧪 SANDBOX MODE';
+                    document.body.appendChild(indicator);
+                }
+                
+            } catch (error) {
+                console.error('Failed to initialize Paddle:', error);
+            }
         });
         
         // 切换月度和年度价格
@@ -370,137 +385,34 @@
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
         }
         
-        // 确保Paddle.js正确加载
-        function ensurePaddleScriptLoaded() {
-            return new Promise((resolve, reject) => {
-                // 检查是否已存在
-                if (typeof Paddle !== 'undefined') {
-                    console.log('Paddle.js already loaded');
-                    resolve();
-                    return;
-                }
-                
-                console.log('Dynamically loading Paddle.js...');
-                
-                // 创建script元素
-                const script = document.createElement('script');
-                script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
-                script.type = 'text/javascript';
-                
-                // 加载成功处理
-                script.onload = () => {
-                    console.log('Paddle.js loaded successfully');
-                    resolve();
-                };
-                
-                // 加载失败处理
-                script.onerror = (error) => {
-                    console.error('Failed to load Paddle.js:', error);
-                    reject(new Error('Failed to load Paddle.js'));
-                };
-                
-                // 添加到文档
-                document.head.appendChild(script);
-            });
-        }
-        
-        // 初始化Paddle Billing
-        function initializePaddleBilling() {
-            try {
-                console.log('Initializing Paddle Billing - Simplified Version');
-                
-                // 检查是否是沙盒环境（通过URL参数判断）
-                const urlParams = new URLSearchParams(window.location.search);
-                const isSandbox = urlParams.has('paddle_env') && urlParams.get('paddle_env') === 'sandbox';
-                
-                // 设置沙盒环境（仅当需要时）
-                if (isSandbox) {
-                    console.log('Setting sandbox environment');
-                    Paddle.Environment.set('sandbox');
-                }
-                
-                // 选择正确的客户端ID
-                const clientId = isSandbox 
-                    ? 'test_c624a7a4c9993fc8965d9c37db6'  // 沙盒令牌
-                    : 'live_74080bad93a7d3b962f98a52c93'; // 生产令牌
-                
-                console.log('Using client ID:', clientId);
-                
-                // 初始化Paddle - 最简单的方法
-                Paddle.Initialize({
-                    token: clientId
-                });
-                
-                console.log('Paddle initialized successfully');
-                
-                // 如果在沙盒模式，添加一个指示器
-                if (isSandbox) {
-                    const indicator = document.createElement('div');
-                    indicator.style.cssText = `
-                        position: fixed;
-                        bottom: 10px;
-                        left: 10px;
-                        background-color: #ff9800;
-                        color: white;
-                        padding: 5px 10px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        z-index: 9999;
-                    `;
-                    indicator.textContent = '🧪 SANDBOX MODE';
-                    document.body.appendChild(indicator);
-                }
-                
-            } catch (error) {
-                console.error('Error initializing Paddle:', error);
-            }
-        }
-        
-        // 打开Paddle结账窗口 - 极简版本
+        // 打开Paddle结账 - 极简官方版本
         function openPaddleCheckout(plan) {
+            console.log('Opening checkout for plan:', plan);
+            
             try {
-                console.log('Opening Paddle checkout for plan:', plan);
-                
-                // 检查Paddle是否已初始化
-                if (typeof Paddle === 'undefined' || !Paddle.Checkout) {
-                    console.error('Paddle not initialized');
-                    return false;
-                }
-                
                 // 检查是否是沙盒环境
                 const urlParams = new URLSearchParams(window.location.search);
                 const isSandbox = urlParams.has('paddle_env') && urlParams.get('paddle_env') === 'sandbox';
                 
-                // 选择正确的价格ID
+                // 价格ID
                 const priceId = plan === 'monthly' 
                     ? (isSandbox ? 'pri_01jrw0em3kydrg4rw523w6s574' : 'pri_01jrfcwajex91zya4346h9ek32')
                     : (isSandbox ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrfcz25f4zdktr7rtt1pnzpw');
                 
-                console.log('Using price ID:', priceId);
-                
-                // 创建最简单的结账配置
-                const checkoutConfig = {
-                    items: [
-                        {
-                            priceId: priceId,
-                            quantity: 1
-                        }
-                    ]
-                };
-                
-                console.log('Checkout configuration:', checkoutConfig);
-                
-                // 打开结账窗口 - 无链式调用
-                Paddle.Checkout.open(checkoutConfig);
-                
-                console.log('Checkout opened');
-                
-                return false; // 阻止链接默认行为
+                // 直接调用结账，最简单的配置
+                Paddle.Checkout.open({
+                    items: [{
+                        priceId: priceId,
+                        quantity: 1
+                    }]
+                });
                 
             } catch (error) {
                 console.error('Error opening checkout:', error);
-                return false;
+                alert('Payment system error. Please try again later.');
             }
+            
+            return false; // 阻止链接默认行为
         }
     </script>
 </body>
