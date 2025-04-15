@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Cancelled - AetherFlow</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .cancel-container {
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cancel-icon {
+            font-size: 80px;
+            color: #F44336;
+            margin-bottom: 20px;
+        }
+        
+        .cancel-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .cancel-message {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #555;
+        }
+        
+        .options-container {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .options-container h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        
+        .faq-preview {
+            text-align: left;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 30px;
+        }
+        
+        .faq-preview h3 {
+            margin-bottom: 20px;
+        }
+        
+        .faq-item-preview {
+            margin-bottom: 15px;
+        }
+        
+        .faq-question-preview {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .faq-answer-preview {
+            color: #555;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>AetherFlow</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="terms-of-service.html">Terms</a></li>
+                    <li><a href="privacy-policy.html">Privacy</a></li>
+                    <li><a href="refund-policy.html">Refunds</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="cancel-section">
+        <div class="container">
+            <div class="cancel-container">
+                <div class="cancel-icon">×</div>
+                <h1 class="cancel-title">Payment Cancelled</h1>
+                <p class="cancel-message">
+                    Your payment process has been cancelled. Don't worry, no charges have been made to your account.
+                </p>
+                
+                <div class="options-container">
+                    <h3>Would you like to:</h3>
+                    <div class="cta-buttons">
+                        <a href="pricing.html" class="btn btn-primary">Try Again</a>
+                        <a href="contact.html" class="btn btn-outline">Get Support</a>
+                    </div>
+                    
+                    <div class="faq-preview">
+                        <h3>Common Questions</h3>
+                        <div class="faq-item-preview">
+                            <div class="faq-question-preview">Why should I upgrade to Pro?</div>
+                            <div class="faq-answer-preview">
+                                AetherFlow Pro gives you access to expanded storage (up to 100 prompts), increased daily optimization attempts (50), and premium features like data export and priority support.
+                            </div>
+                        </div>
+                        <div class="faq-item-preview">
+                            <div class="faq-question-preview">Can I cancel my subscription anytime?</div>
+                            <div class="faq-answer-preview">
+                                Yes, you can cancel your subscription at any time. Your Pro features will remain active until the end of your current billing period.
+                            </div>
+                        </div>
+                        <div class="faq-item-preview">
+                            <div class="faq-question-preview">Is my payment information secure?</div>
+                            <div class="faq-answer-preview">
+                                Yes, we use Paddle as our payment processor, which employs industry-standard security measures to protect your payment information. We never store your credit card details.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AetherFlow</h2>
+                    <p>Enhancing your AI experience</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-links-section">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="pricing.html">Pricing</a></li>
+                            <li><a href="contact.html">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-links-section">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="terms-of-service.html">Terms of Service</a></li>
+                            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                            <li><a href="refund-policy.html">Refund Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 AetherFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse URL parameters to potentially customize the message
+            const urlParams = new URLSearchParams(window.location.search);
+            const reason = urlParams.get('reason');
+            
+            // You could customize the message based on the cancellation reason
+            if (reason === 'price') {
+                document.querySelector('.cancel-message').textContent = 
+                    'We understand pricing is an important factor. Remember, our free tier is always available with core features.';
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Paddle Checkout JS 集成 -->
+    <script src="https://cdn.paddle.com/paddle/paddle.js"></script>
 </head>
 <body>
     <header>
@@ -62,7 +64,7 @@
                             </ul>
                         </div>
                         <div class="card-action">
-                            <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-outline">Get Started</a>
+                            <a href="https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki" class="btn btn-outline">Get Started</a>
                         </div>
                     </div>
                     <div class="pricing-card premium monthly-plan">
@@ -83,7 +85,7 @@
                             </ul>
                         </div>
                         <div class="card-action">
-                            <a href="https://app.paddle.com/checkout/your-checkout-id" class="btn btn-primary" onclick="return openPaddleCheckout('monthly')">Upgrade Now</a>
+                            <a href="#" class="btn btn-primary" onclick="return openPaddleCheckout('monthly')">Upgrade Now</a>
                         </div>
                     </div>
                     <div class="pricing-card premium annual-plan" style="display: none;">
@@ -105,7 +107,7 @@
                             </ul>
                         </div>
                         <div class="card-action">
-                            <a href="https://app.paddle.com/checkout/your-checkout-id" class="btn btn-primary" onclick="return openPaddleCheckout('annual')">Upgrade Now</a>
+                            <a href="#" class="btn btn-primary" onclick="return openPaddleCheckout('annual')">Upgrade Now</a>
                         </div>
                     </div>
                 </div>
@@ -278,7 +280,7 @@
                     <ul>
                         <li><a href="index.html">Home</a></li>
                         <li><a href="pricing.html">Pricing</a></li>
-                        <li><a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id">Chrome Store</a></li>
+                        <li><a href="https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki">Chrome Store</a></li>
                     </ul>
                 </div>
                 <div class="footer-contact">
@@ -293,10 +295,12 @@
     </footer>
 
     <script>
-        // Toggle FAQ items
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.faq-question').forEach(item => {
-                item.addEventListener('click', event => {
+            // Initialize FAQ toggles
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            
+            faqQuestions.forEach(item => {
+                item.addEventListener('click', function() {
                     const faqItem = item.parentNode;
                     const answer = faqItem.querySelector('.faq-answer');
                     const toggle = item.querySelector('.faq-toggle');
@@ -314,6 +318,9 @@
                     }
                 });
             });
+            
+            // Initialize Paddle
+            initializePaddle();
         });
         
         // Toggle between monthly and annual pricing
@@ -335,10 +342,99 @@
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
         }
         
+        // 初始化Paddle
+        function initializePaddle() {
+            // 设置Paddle环境
+            // 判断是否是开发环境，如果是localhost，使用沙盒环境
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const vendorId = isLocalhost ? '29838' : '223800'; // 使用正确的沙盒和生产Vendor ID
+            
+            // 初始化Paddle，添加client-side token
+            const paddleOptions = { 
+                vendor: vendorId, 
+                debug: isLocalhost
+            };
+            
+            // 根据环境设置token和环境模式
+            if (!isLocalhost) {
+                paddleOptions.token = 'live_74080bad93a7d3b962f98a52c93'; // 生产环境token
+            } else {
+                paddleOptions.token = 'test_c624a7a4c9993fc8965d9c37db6'; // 沙盒环境token
+                Paddle.Environment.set('sandbox'); // 设置为沙盒环境
+            }
+            
+            // 进行Paddle设置
+            Paddle.Setup(paddleOptions);
+            
+            console.log('Paddle initialized with vendor ID:', vendorId, 'Debug mode:', isLocalhost);
+        }
+        
+        // 配置产品ID和计划ID
+        const productConfigs = {
+            production: {
+                productId: 'pro_01jrcqtf7wa1mwr0hy4h31p9v',
+                monthly: 'pri_01jrfcwajex91zya4346h9ek32',
+                annual: 'pri_01jrfcz25f4zdktr7rtt1pnzpw'
+            },
+            sandbox: {
+                productId: 'pro_01jrw0cx348x89jy2y47fmfeyx',
+                monthly: 'pri_01jrw0em3kydrg4rw523w6s574',
+                annual: 'pri_01jrw0f7y1kfw9jc967eswbnrs'
+            }
+        };
+        
+        // 打开Paddle结账窗口
         function openPaddleCheckout(plan) {
-            // This is a placeholder function that would be replaced with actual Paddle checkout integration
-            alert("In a real implementation, this would open the Paddle checkout for the " + plan + " plan");
-            return false; // Prevent the default link behavior
+            // 获取来源参数，用于跟踪转化来源
+            const source = new URLSearchParams(window.location.search).get('source') || 'website_direct';
+            
+            // 判断是否是开发环境
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 选择正确的环境配置
+            const config = isLocalhost ? productConfigs.sandbox : productConfigs.production;
+            
+            // 获取产品ID和计划ID
+            const productId = config.productId;
+            const planId = plan === 'monthly' ? config.monthly : config.annual;
+            
+            if (!productId) {
+                console.error('Invalid product ID');
+                return false;
+            }
+            
+            // 准备结账配置
+            const checkoutOptions = {
+                product: productId,
+                successCallback: function(data) {
+                    console.log('Checkout success', data);
+                    // 重定向到成功页面
+                    window.location.href = 'success.html?checkout=' + data.checkout.id;
+                },
+                closeCallback: function(data) {
+                    console.log('Checkout closed', data);
+                    // 如果有检测支付被用户主动取消的方法，可以重定向到取消页面
+                    if (data && data.status === 'closed') {
+                        window.location.href = 'cancel.html';
+                    }
+                },
+                passthrough: JSON.stringify({
+                    source: source,
+                    timestamp: Date.now()
+                }),
+                locale: 'en',
+                // 设置回调URL
+                successUrl: window.location.origin + '/success.html?checkout={checkout}',
+                cancelUrl: window.location.origin + '/cancel.html',
+                // 设置计划ID
+                override: planId
+            };
+            
+            // 打开Paddle结账窗口
+            Paddle.Checkout.open(checkoutOptions);
+            
+            // 阻止链接默认行为
+            return false;
         }
     </script>
 </body>
