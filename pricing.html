@@ -454,7 +454,11 @@
                 // 初始化 Paddle Billing（v2 API 不接受 environment 参数）
                 Paddle.Initialize({
                     token: clientId,
-                    locale: 'en-US',
+                    checkout: {
+                        settings: {
+                            locale: 'en-US'
+                        }
+                    },
                     eventCallback: function(eventData) {
                         // 记录所有事件
                         console.log('Paddle事件:', eventData.name, eventData.data);
