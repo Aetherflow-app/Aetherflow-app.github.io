@@ -651,11 +651,10 @@
                         settings: {
                             displayMode: 'overlay',
                             theme: 'light',
-                            locale: 'en-US'
-                        },
-                        // 成功和取消URL
-                        successURL: window.location.origin + '/success.html?checkout={{checkoutId}}',
-                        cancelURL: window.location.origin + '/cancel.html'
+                            locale: 'en-US',
+                            successUrl: window.location.origin + '/success.html?checkout={{checkoutId}}',
+                            closeUrl: window.location.origin + '/cancel.html'
+                        }
                     };
 
                     // 详细记录结账配置
