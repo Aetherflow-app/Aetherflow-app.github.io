@@ -344,29 +344,49 @@
         
         // 初始化Paddle
         function initializePaddle() {
-            // 设置Paddle环境
-            // 判断是否是开发环境，如果是localhost，使用沙盒环境
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const vendorId = isLocalhost ? '29838' : '223800'; // 使用正确的沙盒和生产Vendor ID
-            
-            // 初始化Paddle，添加client-side token
-            const paddleOptions = { 
-                vendor: vendorId, 
-                debug: isLocalhost
-            };
-            
-            // 根据环境设置token和环境模式
-            if (!isLocalhost) {
-                paddleOptions.token = 'live_74080bad93a7d3b962f98a52c93'; // 生产环境token
-            } else {
-                paddleOptions.token = 'test_c624a7a4c9993fc8965d9c37db6'; // 沙盒环境token
-                Paddle.Environment.set('sandbox'); // 设置为沙盒环境
+            try {
+                console.log('Initializing Paddle...');
+                
+                // 设置Paddle环境
+                // 判断是否是开发环境，如果是localhost，使用沙盒环境
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const vendorId = isLocalhost ? '29838' : '223800'; // 使用正确的沙盒和生产Vendor ID
+                
+                console.log('Current hostname:', window.location.hostname);
+                console.log('Is localhost environment:', isLocalhost);
+                console.log('Using vendor ID:', vendorId);
+                
+                // 初始化Paddle，添加client-side token
+                const paddleOptions = { 
+                    vendor: vendorId, 
+                    debug: true // 始终启用调试，便于排查问题
+                };
+                
+                // 根据环境设置token和环境模式
+                if (!isLocalhost) {
+                    paddleOptions.token = 'live_74080bad93a7d3b962f98a52c93'; // 生产环境token
+                    console.log('Using production token');
+                } else {
+                    paddleOptions.token = 'test_c624a7a4c9993fc8965d9c37db6'; // 沙盒环境token
+                    Paddle.Environment.set('sandbox'); // 设置为沙盒环境
+                    console.log('Using sandbox token and environment');
+                }
+                
+                console.log('Paddle options:', paddleOptions);
+                
+                // 检查Paddle对象是否存在
+                if (typeof Paddle === 'undefined') {
+                    console.error('Paddle object not found! Script may not be loaded correctly.');
+                    return;
+                }
+                
+                // 进行Paddle设置
+                Paddle.Setup(paddleOptions);
+                
+                console.log('Paddle initialized successfully');
+            } catch (error) {
+                console.error('Error initializing Paddle:', error);
             }
-            
-            // 进行Paddle设置
-            Paddle.Setup(paddleOptions);
-            
-            console.log('Paddle initialized with vendor ID:', vendorId, 'Debug mode:', isLocalhost);
         }
         
         // 配置产品ID和计划ID
@@ -385,56 +405,77 @@
         
         // 打开Paddle结账窗口
         function openPaddleCheckout(plan) {
-            // 获取来源参数，用于跟踪转化来源
-            const source = new URLSearchParams(window.location.search).get('source') || 'website_direct';
-            
-            // 判断是否是开发环境
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // 选择正确的环境配置
-            const config = isLocalhost ? productConfigs.sandbox : productConfigs.production;
-            
-            // 获取产品ID和计划ID
-            const productId = config.productId;
-            const planId = plan === 'monthly' ? config.monthly : config.annual;
-            
-            if (!productId) {
-                console.error('Invalid product ID');
+            try {
+                console.log('Paddle checkout triggered for plan:', plan);
+                
+                // 检查Paddle对象是否存在
+                if (typeof Paddle === 'undefined') {
+                    console.error('Paddle object not found! Script may not be loaded correctly.');
+                    alert('Payment system unavailable. Please try again later.');
+                    return false;
+                }
+                
+                // 获取来源参数，用于跟踪转化来源
+                const source = new URLSearchParams(window.location.search).get('source') || 'website_direct';
+                
+                // 判断是否是开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                console.log('Environment:', isLocalhost ? 'Local/Sandbox' : 'Production');
+                
+                // 选择正确的环境配置
+                const config = isLocalhost ? productConfigs.sandbox : productConfigs.production;
+                console.log('Using config:', config);
+                
+                // 获取产品ID和计划ID
+                const productId = config.productId;
+                const planId = plan === 'monthly' ? config.monthly : config.annual;
+                
+                if (!productId) {
+                    console.error('Invalid product ID');
+                    return false;
+                }
+                
+                // 准备结账配置
+                const checkoutOptions = {
+                    product: productId,
+                    successCallback: function(data) {
+                        console.log('Checkout success', data);
+                        // 重定向到成功页面
+                        window.location.href = 'success.html?checkout=' + data.checkout.id;
+                    },
+                    closeCallback: function(data) {
+                        console.log('Checkout closed', data);
+                        // 如果有检测支付被用户主动取消的方法，可以重定向到取消页面
+                        if (data && data.status === 'closed') {
+                            window.location.href = 'cancel.html';
+                        }
+                    },
+                    passthrough: JSON.stringify({
+                        source: source,
+                        timestamp: Date.now()
+                    }),
+                    locale: 'en',
+                    // 设置回调URL - 使用相对路径避免域名问题
+                    successUrl: 'success.html?checkout={checkout}',
+                    cancelUrl: 'cancel.html',
+                    // 设置计划ID
+                    override: planId
+                };
+                
+                console.log('Checkout options:', checkoutOptions);
+                
+                // 打开Paddle结账窗口
+                console.log('Opening Paddle checkout...');
+                Paddle.Checkout.open(checkoutOptions);
+                console.log('Paddle checkout opened');
+                
+                // 阻止链接默认行为
+                return false;
+            } catch (error) {
+                console.error('Error in openPaddleCheckout:', error);
+                alert('An error occurred with the payment system. Please try again later.');
                 return false;
             }
-            
-            // 准备结账配置
-            const checkoutOptions = {
-                product: productId,
-                successCallback: function(data) {
-                    console.log('Checkout success', data);
-                    // 重定向到成功页面
-                    window.location.href = 'success.html?checkout=' + data.checkout.id;
-                },
-                closeCallback: function(data) {
-                    console.log('Checkout closed', data);
-                    // 如果有检测支付被用户主动取消的方法，可以重定向到取消页面
-                    if (data && data.status === 'closed') {
-                        window.location.href = 'cancel.html';
-                    }
-                },
-                passthrough: JSON.stringify({
-                    source: source,
-                    timestamp: Date.now()
-                }),
-                locale: 'en',
-                // 设置回调URL
-                successUrl: 'https://aetherflow-app.com/success.html?checkout={checkout}',
-                cancelUrl: 'https://aetherflow-app.com/cancel.html',
-                // 设置计划ID
-                override: planId
-            };
-            
-            // 打开Paddle结账窗口
-            Paddle.Checkout.open(checkoutOptions);
-            
-            // 阻止链接默认行为
-            return false;
         }
     </script>
 </body>
