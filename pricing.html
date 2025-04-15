@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Paddle Billing JS 集成 - 使用defer确保在DOM加载后执行 -->
-    <script defer src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <!-- Paddle Billing JS 集成 -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
 <body>
     <header>
@@ -319,35 +319,9 @@
                 });
             });
             
-            // 检查Paddle是否已加载
-            if (typeof Paddle === 'undefined') {
-                console.warn('Paddle尚未加载，将尝试手动加载');
-                loadPaddleScript();
-            } else {
-                console.log('Paddle已加载，初始化Billing');
-                initializePaddleBilling();
-            }
+            // 初始化Paddle Billing
+            initializePaddleBilling();
         });
-
-        // 手动加载Paddle脚本
-        function loadPaddleScript() {
-            console.log('手动加载Paddle脚本');
-            const script = document.createElement('script');
-            script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
-            script.async = true;
-            
-            script.onload = function() {
-                console.log('Paddle脚本加载成功');
-                initializePaddleBilling();
-            };
-            
-            script.onerror = function() {
-                console.error('Paddle脚本加载失败');
-                alert('支付系统加载失败，请刷新页面或稍后再试');
-            };
-            
-            document.head.appendChild(script);
-        }
         
         // 切换月度和年度价格
         function showMonthly() {
@@ -369,7 +343,7 @@
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
         }
         
-        // Paddle Billing 产品/价格ID
+        // Paddle Billing 产品/价格ID (注意：Billing API使用priceId而非productId)
         const priceConfigs = {
             production: {
                 monthly: 'pri_01jrfcwajex91zya4346h9ek32',
@@ -381,120 +355,66 @@
             }
         };
         
-        // 检测环境
-        function getEnvironment() {
-            const hostname = window.location.hostname;
-            console.log('当前域名:', hostname);
-            
-            // 明确列出所有开发/测试环境域名
-            const devDomains = ['localhost', '127.0.0.1', 'dev.aetherflow-app.com'];
-            const isDevEnvironment = devDomains.includes(hostname);
-            
-            console.log('环境判断:', isDevEnvironment ? 'sandbox' : 'production');
-            return isDevEnvironment ? 'sandbox' : 'production';
-        }
-        
-        // 验证价格ID
-        function validatePriceId(priceId) {
-            // Paddle价格ID格式检查
-            const validPriceIdPattern = /^pri_[a-z0-9]{20,36}$/;
-            const isValidFormat = validPriceIdPattern.test(priceId);
-            
-            if (!isValidFormat) {
-                console.error('价格ID格式不正确:', priceId);
-                return false;
-            }
-            
-            console.log('价格ID格式有效:', priceId);
-            return true;
-        }
-        
-        // 构建回调URL
-        function buildCallbackUrls() {
-            const baseUrl = window.location.origin;
-            console.log('基础URL:', baseUrl);
-            
-            return {
-                successUrl: `${baseUrl}/success.html?checkout={checkout}`,
-                cancelUrl: `${baseUrl}/cancel.html`
-            };
-        }
-        
         // 初始化Paddle Billing
         function initializePaddleBilling() {
             try {
-                console.group('初始化Paddle Billing');
-                console.log('开始初始化...');
+                console.log('Initializing Paddle Billing...');
                 
-                // 环境检测
-                const env = getEnvironment();
-                const isDevEnvironment = env === 'sandbox';
+                // 判断是否是开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                console.log('Current hostname:', window.location.hostname);
+                console.log('Is localhost environment:', isLocalhost);
                 
                 // 设置环境和客户端ID
-                // 注意: Paddle Billing 使用 client-id/token 而不是 vendor-id
-                const clientId = isDevEnvironment ? 
+                // 注意: Paddle Billing 使用 client-id 而不是 vendor-id
+                const clientId = isLocalhost ? 
                     'test_c624a7a4c9993fc8965d9c37db6' :  // 沙盒环境 token
                     'live_74080bad93a7d3b962f98a52c93';   // 生产环境 token
                 
-                console.log('使用环境:', env);
-                console.log('使用客户端ID:', clientId);
+                console.log('Using client ID:', clientId);
                 
-                // 获取回调URL
-                const callbacks = buildCallbackUrls();
-                console.log('回调URL:', callbacks);
-                
-                // 初始化 Paddle Billing - 这里使用 Initialize 而不是 configure
-                Paddle.Initialize({
+                // 初始化 Paddle Billing
+                Paddle.configure({
                     token: clientId,
-                    environment: isDevEnvironment ? 'sandbox' : 'production',
+                    environment: isLocalhost ? 'sandbox' : 'production',
                     checkout: {
                         theme: 'light',
-                        successUrl: callbacks.successUrl,
-                        cancelUrl: callbacks.cancelUrl
+                        successUrl: window.location.origin + '/success.html?checkout={checkout}&plan={plan}',
+                        cancelUrl: window.location.origin + '/cancel.html'
                     }
                 });
                 
-                console.log('Paddle Billing初始化成功');
-                console.groupEnd();
+                console.log('Paddle Billing initialized successfully');
                 
             } catch (error) {
-                console.error('初始化Paddle Billing出错:', error);
-                console.groupEnd();
+                console.error('Error initializing Paddle Billing:', error);
             }
         }
         
         // 打开Paddle Billing结账窗口
         function openPaddleCheckout(plan) {
             try {
-                console.group('Paddle结账流程');
-                console.log('计划类型:', plan);
+                console.log('Paddle Billing checkout triggered for plan:', plan);
                 
-                // 检查Paddle对象
-                if (typeof Paddle === 'undefined') {
-                    console.error('Paddle未定义!');
-                    console.groupEnd();
-                    alert('支付系统未加载，请刷新页面或稍后再试');
+                // 检查Paddle对象是否存在
+                if (typeof Paddle === 'undefined' || typeof Paddle.Checkout === 'undefined') {
+                    console.error('Paddle Billing API not loaded correctly');
+                    alert('Payment system unavailable. Please try again later.');
                     return false;
                 }
                 
-                // 环境检测
-                const env = getEnvironment();
-                console.log('使用环境:', env);
+                // 判断是否是开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 
-                // 获取价格ID
-                const config = priceConfigs[env === 'sandbox' ? 'sandbox' : 'production'];
+                // 获取正确的价格ID
+                const config = priceConfigs[isLocalhost ? 'sandbox' : 'production'];
                 const priceId = plan === 'monthly' ? config.monthly : config.annual;
-                console.log('价格ID:', priceId);
                 
-                // 验证价格ID
-                if (!validatePriceId(priceId)) {
-                    console.groupEnd();
-                    alert('价格配置错误，请联系客服');
-                    return false;
-                }
+                console.log('Using environment:', isLocalhost ? 'sandbox' : 'production');
+                console.log('Selected price ID:', priceId);
                 
-                // 构建结账参数
-                const checkoutParams = {
+                // 打开结账界面
+                Paddle.Checkout.open({
                     items: [
                         {
                             priceId: priceId,
@@ -502,27 +422,19 @@
                         }
                     ],
                     customer: {
-                        email: '' // 留空让用户在结账时填写
+                        email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
                     },
                     customData: {
-                        source: 'website',
+                        source: window.location.search ? new URLSearchParams(window.location.search).get('source') || 'website' : 'website',
                         plan: plan
                     }
-                };
-                
-                console.log('结账参数:', checkoutParams);
-                
-                // 打开结账界面 - 使用 Paddle.Checkout.open 方法
-                Paddle.Checkout.open(checkoutParams);
-                console.log('结账窗口已打开');
-                console.groupEnd();
+                });
                 
                 return false; // 阻止链接默认行为
                 
             } catch (error) {
-                console.error('结账过程出错:', error);
-                console.groupEnd();
-                alert('支付系统出现问题，请稍后再试: ' + error.message);
+                console.error('Error opening Paddle Billing checkout:', error);
+                alert('An error occurred with the payment system. Please try again later.');
                 return false;
             }
         }

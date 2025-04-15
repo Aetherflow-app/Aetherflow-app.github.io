@@ -147,117 +147,85 @@
     <script>
         // This script handles verification of payment status and extension communication
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('支付成功页面加载完成');
-            
-            // 获取并验证URL参数
+            // Parse URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
+            const planType = urlParams.get('plan');
             
+            // If we have checkout parameters, we can use them for verification
             if (checkoutId) {
-                console.log('检测到结账ID:', checkoutId);
-                saveSuccessData(checkoutId);
+                console.log('Checkout ID:', checkoutId);
+                console.log('Plan Type:', planType);
                 
-                // 更新UI显示交易ID
-                const transactionElement = document.getElementById('transaction-id');
-                if (transactionElement) {
-                    transactionElement.textContent = checkoutId;
+                // 为Paddle Billing添加特殊处理
+                try {
+                    // 对于Paddle Billing，我们需要记录交易ID
+                    const transactionElement = document.getElementById('transaction-id');
+                    if (transactionElement) {
+                        transactionElement.textContent = checkoutId;
+                    }
+                    
+                    // 尝试与扩展通信，更新会员状态
+                    communicateWithExtension(checkoutId, planType);
+                    
+                    // 我们还可以更新成功消息，确认使用了Paddle Billing
+                    const successMessage = document.querySelector('.success-message');
+                    if (successMessage) {
+                        successMessage.innerHTML += '<br><small>Transaction processed with Paddle Billing.</small>';
+                    }
+                } catch (error) {
+                    console.error('Error updating success page:', error);
                 }
-                
-                // 更新成功消息
-                const successMessage = document.querySelector('.success-message');
-                if (successMessage) {
-                    successMessage.innerHTML += '<br><small>交易ID: ' + checkoutId + '</small>';
-                }
-            } else {
-                console.warn('未检测到结账ID参数');
             }
             
-            // 更新所有扩展链接
-            updateExtensionLinks();
-        });
-        
-        // 保存成功数据到localStorage(可供扩展获取)
-        function saveSuccessData(checkoutId) {
-            try {
-                // 存储支付成功数据，以便扩展检测并激活Pro功能
-                const successData = {
-                    checkoutId: checkoutId,
-                    timestamp: Date.now(),
-                    source: 'website'
-                };
-                
-                // 存储到localStorage
-                localStorage.setItem('aetherflow_payment_success', JSON.stringify(successData));
-                console.log('支付成功数据已保存到localStorage');
-                
-                // 如果用户已经安装了扩展，尝试通知扩展
-                attemptToNotifyExtension(successData);
-                
-            } catch (error) {
-                console.error('保存支付数据失败:', error);
-            }
-        }
-        
-        // 尝试通知已安装的扩展
-        function attemptToNotifyExtension(data) {
-            try {
-                // 使用chrome.runtime.sendMessage进行消息传递(如果当前页面由扩展打开)
-                if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
-                    console.log('尝试通知扩展...');
-                    
-                    // 向扩展发送消息
-                    chrome.runtime.sendMessage('ldpadjcdbfndeghcklogoppmbnmphbki', {
-                        type: 'PAYMENT_SUCCESS',
-                        data: data
-                    }, function(response) {
-                        if (response && response.success) {
-                            console.log('扩展已收到支付成功通知');
-                        } else {
-                            console.log('扩展通知未收到响应或失败');
-                        }
-                    });
-                } else {
-                    console.log('当前环境不支持直接扩展通信');
-                }
-            } catch (error) {
-                console.log('通知扩展失败(这是正常的，如果扩展未安装):', error);
-            }
-        }
-        
-        // 更新所有指向扩展的链接
-        function updateExtensionLinks() {
-            const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki';
+            // Update the Open AetherFlow button with the actual extension ID
             const extensionLinks = document.querySelectorAll('a[href*="chrome-extension://"]');
-            
             extensionLinks.forEach(link => {
-                // 确保链接使用正确的扩展ID
-                if (!link.href.includes(extensionId)) {
-                    const newHref = `chrome-extension://${extensionId}/pages/sidepanel/index.html`;
-                    console.log(`更新扩展链接: ${link.href} -> ${newHref}`);
-                    link.href = newHref;
-                }
-                
-                // 添加点击跟踪
+                // 为点击添加额外处理
                 link.addEventListener('click', function(e) {
-                    console.log('用户点击了"打开扩展"按钮');
-                    
-                    // 检查扩展是否已安装(通过尝试访问扩展URL)
-                    const img = new Image();
-                    img.onload = function() {
-                        console.log('扩展已安装，正常打开链接');
-                    };
-                    img.onerror = function() {
-                        console.log('检测到扩展可能未安装');
-                        e.preventDefault();
-                        
-                        // 如果扩展未安装，引导用户安装
-                        if (confirm('AetherFlow扩展似乎未安装。您需要先安装扩展才能使用Pro功能。立即前往Chrome商店安装?')) {
-                            window.open('https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki', '_blank');
-                        }
-                    };
-                    img.src = `chrome-extension://${extensionId}/assets/icon16.png`;
+                    // 本地存储标记，表示需要刷新会员状态
+                    localStorage.setItem('aetherflow_payment_success', 'true');
+                    localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
+                    localStorage.setItem('aetherflow_plan_type', planType || '');
                 });
             });
+        });
+        
+        // 尝试与扩展通信，通知支付成功
+        function communicateWithExtension(checkoutId, planType) {
+            // 使用Chrome扩展消息机制
+            try {
+                const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+                
+                // 准备消息数据
+                const messageData = {
+                    type: 'PAYMENT_SUCCESS',
+                    checkoutId: checkoutId,
+                    planType: planType || 'monthly', // 默认为月度计划
+                    timestamp: Date.now()
+                };
+                
+                console.log('Attempting to communicate with extension:', messageData);
+                
+                // 尝试发送消息到扩展
+                chrome.runtime.sendMessage(extensionId, messageData, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log('Failed to communicate with extension:', chrome.runtime.lastError);
+                        // 失败时使用本地存储作为备份
+                        localStorage.setItem('aetherflow_payment_success', 'true');
+                        localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
+                        localStorage.setItem('aetherflow_plan_type', planType || '');
+                    } else {
+                        console.log('Successfully communicated with extension:', response);
+                    }
+                });
+            } catch (error) {
+                console.error('Error communicating with extension:', error);
+                // 错误时使用本地存储作为备份
+                localStorage.setItem('aetherflow_payment_success', 'true');
+                localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
+                localStorage.setItem('aetherflow_plan_type', planType || '');
+            }
         }
     </script>
 </body>
