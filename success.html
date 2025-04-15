@@ -154,8 +154,23 @@
             // If we have checkout parameters, we can use them for verification
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
-                // In a real implementation, you could verify the status with Paddle API
-                // or communicate with your extension
+                
+                // 为Paddle Billing添加特殊处理
+                try {
+                    // 对于Paddle Billing，我们需要记录交易ID
+                    const transactionElement = document.getElementById('transaction-id');
+                    if (transactionElement) {
+                        transactionElement.textContent = checkoutId;
+                    }
+                    
+                    // 我们还可以更新成功消息，确认使用了Paddle Billing
+                    const successMessage = document.querySelector('.success-message');
+                    if (successMessage) {
+                        successMessage.innerHTML += '<br><small>Transaction processed with Paddle Billing.</small>';
+                    }
+                } catch (error) {
+                    console.error('Error updating success page:', error);
+                }
             }
             
             // Update the Open AetherFlow button with the actual extension ID

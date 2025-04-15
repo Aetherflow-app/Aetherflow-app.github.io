@@ -379,8 +379,8 @@
                     environment: isLocalhost ? 'sandbox' : 'production',
                     checkout: {
                         theme: 'light',
-                        successUrl: 'success.html?checkout={checkout}',
-                        cancelUrl: 'cancel.html'
+                        successUrl: window.location.origin + '/success.html?checkout={checkout}',
+                        cancelUrl: window.location.origin + '/cancel.html'
                     }
                 });
                 
@@ -440,5 +440,4 @@
         }
     </script>
 </body>
-</html> 
 </html> 

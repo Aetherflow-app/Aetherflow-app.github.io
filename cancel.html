@@ -178,14 +178,24 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Parse URL parameters to potentially customize the message
-            const urlParams = new URLSearchParams(window.location.search);
-            const reason = urlParams.get('reason');
-            
-            // You could customize the message based on the cancellation reason
-            if (reason === 'price') {
-                document.querySelector('.cancel-message').textContent = 
-                    'We understand pricing is an important factor. Remember, our free tier is always available with core features.';
+            // 为Paddle Billing添加特殊处理
+            try {
+                // 获取URL参数
+                const urlParams = new URLSearchParams(window.location.search);
+                const cancelReason = urlParams.get('reason');
+                
+                // 如果有取消原因，显示在页面上
+                if (cancelReason) {
+                    const cancelMessage = document.querySelector('.cancel-message');
+                    if (cancelMessage) {
+                        cancelMessage.innerHTML += `<br><small>Reason: ${cancelReason}</small>`;
+                    }
+                }
+                
+                // 记录到控制台
+                console.log('Payment cancelled. Paddle Billing integration.');
+            } catch (error) {
+                console.error('Error in cancel page:', error);
             }
         });
     </script>
