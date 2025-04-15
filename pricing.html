@@ -350,7 +350,8 @@
                 // 设置Paddle环境
                 // 判断是否是开发环境，如果是localhost，使用沙盒环境
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const vendorId = isLocalhost ? '29838' : '223800'; // 使用正确的沙盒和生产Vendor ID
+                // vendor ID必须是整数，而不是字符串
+                const vendorId = isLocalhost ? 29838 : 223800; // 使用正确的沙盒和生产Vendor ID，转换为整数
                 
                 console.log('Current hostname:', window.location.hostname);
                 console.log('Is localhost environment:', isLocalhost);
@@ -358,7 +359,7 @@
                 
                 // 初始化Paddle，添加client-side token
                 const paddleOptions = { 
-                    vendor: vendorId, 
+                    vendor: vendorId, // 已经是整数
                     debug: true // 始终启用调试，便于排查问题
                 };
                 
