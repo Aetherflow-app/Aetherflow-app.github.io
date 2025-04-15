@@ -63,6 +63,26 @@
             gap: 20px;
             flex-wrap: wrap;
         }
+        
+        .language-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .transaction-info {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -84,29 +104,56 @@
         </div>
     </header>
 
+    <div class="language-switch" onclick="toggleLanguage()">中文 / English</div>
+
     <section class="success-section">
         <div class="container">
             <div class="success-container">
                 <div class="success-icon">✓</div>
-                <h1 class="success-title">Payment Successful!</h1>
-                <p class="success-message">
+                <h1 class="success-title en">Payment Successful!</h1>
+                <h1 class="success-title zh" style="display:none;">支付成功！</h1>
+                
+                <p class="success-message en">
                     Thank you for upgrading to AetherFlow Pro! Your account has been successfully upgraded, and you now have access to all premium features.
+                </p>
+                <p class="success-message zh" style="display:none;">
+                    感谢您升级到AetherFlow专业版！您的账户已成功升级，现在您可以使用所有高级功能。
                 </p>
                 
                 <div class="next-steps">
-                    <h3>Next Steps:</h3>
-                    <ul>
+                    <h3 class="en">Next Steps:</h3>
+                    <h3 class="zh" style="display:none;">后续步骤：</h3>
+                    
+                    <ul class="en">
                         <li>Return to the AetherFlow extension to see your new Pro status</li>
                         <li>Your Pro badge should now be active (gold)</li>
                         <li>Enjoy your expanded prompt storage (up to 100 prompts)</li>
                         <li>Take advantage of 50 optimization attempts daily</li>
                         <li>Access all premium features including data export</li>
                     </ul>
+                    
+                    <ul class="zh" style="display:none;">
+                        <li>返回AetherFlow扩展程序查看您的专业版状态</li>
+                        <li>您的专业版徽章现在应该已激活（金色）</li>
+                        <li>享受扩展的提示词存储空间（最多100个提示词）</li>
+                        <li>每天可使用50次优化尝试</li>
+                        <li>使用所有高级功能，包括数据导出</li>
+                    </ul>
+                </div>
+                
+                <div class="transaction-info">
+                    <p class="en">Transaction ID: <span id="transaction-id">Processing...</span></p>
+                    <p class="zh" style="display:none;">交易ID：<span id="transaction-id-zh">处理中...</span></p>
+                    <p class="en">Plan: <span id="plan-type">Monthly</span></p>
+                    <p class="zh" style="display:none;">方案：<span id="plan-type-zh">月度</span></p>
                 </div>
                 
                 <div class="cta-buttons">
-                    <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" class="btn btn-primary">Open AetherFlow</a>
-                    <a href="contact.html" class="btn btn-outline">Need Help?</a>
+                    <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn" class="btn btn-primary en">Open AetherFlow</a>
+                    <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn-zh" class="btn btn-primary zh" style="display:none;">打开AetherFlow</a>
+                    
+                    <a href="contact.html" class="btn btn-outline en">Need Help?</a>
+                    <a href="contact.html" class="btn btn-outline zh" style="display:none;">需要帮助？</a>
                 </div>
             </div>
         </div>
@@ -145,87 +192,137 @@
     </footer>
 
     <script>
-        // This script handles verification of payment status and extension communication
+        // 切换语言
+        function toggleLanguage() {
+            const enElements = document.querySelectorAll('.en');
+            const zhElements = document.querySelectorAll('.zh');
+            
+            enElements.forEach(el => {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            zhElements.forEach(el => {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // 保存语言偏好
+            const currentLang = document.querySelector('.en').style.display === 'none' ? 'zh' : 'en';
+            localStorage.setItem('aetherflow_language', currentLang);
+        }
+        
+        // 应用保存的语言偏好
+        function applyLanguagePreference() {
+            const savedLang = localStorage.getItem('aetherflow_language');
+            if (savedLang === 'zh') {
+                toggleLanguage();
+            }
+        }
+        
+        // 处理支付成功数据
         document.addEventListener('DOMContentLoaded', function() {
-            // Parse URL parameters
+            // 应用保存的语言偏好
+            applyLanguagePreference();
+            
+            // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
             
-            // If we have checkout parameters, we can use them for verification
+            // 如果有结账参数，使用它们进行验证
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
                 
-                // 为Paddle Billing添加特殊处理
-                try {
-                    // 对于Paddle Billing，我们需要记录交易ID
-                    const transactionElement = document.getElementById('transaction-id');
-                    if (transactionElement) {
-                        transactionElement.textContent = checkoutId;
+                // 更新交易ID显示
+                const transactionElements = [
+                    document.getElementById('transaction-id'),
+                    document.getElementById('transaction-id-zh')
+                ];
+                
+                transactionElements.forEach(element => {
+                    if (element) {
+                        element.textContent = checkoutId;
                     }
-                    
-                    // 尝试与扩展通信，更新会员状态
-                    communicateWithExtension(checkoutId, planType);
-                    
-                    // 我们还可以更新成功消息，确认使用了Paddle Billing
-                    const successMessage = document.querySelector('.success-message');
-                    if (successMessage) {
-                        successMessage.innerHTML += '<br><small>Transaction processed with Paddle Billing.</small>';
-                    }
-                } catch (error) {
-                    console.error('Error updating success page:', error);
+                });
+                
+                // 更新计划类型显示
+                const planElement = document.getElementById('plan-type');
+                const planElementZh = document.getElementById('plan-type-zh');
+                
+                if (planType === 'annual') {
+                    if (planElement) planElement.textContent = 'Annual';
+                    if (planElementZh) planElementZh.textContent = '年度';
+                } else {
+                    if (planElement) planElement.textContent = 'Monthly';
+                    if (planElementZh) planElementZh.textContent = '月度';
                 }
+                
+                // 尝试与扩展通信，更新会员状态
+                communicateWithExtension(checkoutId, planType);
+                
+                // 保存到localStorage作为备份
+                localStorage.setItem('aetherflow_payment_success', 'true');
+                localStorage.setItem('aetherflow_checkout_id', checkoutId);
+                localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
             }
             
-            // Update the Open AetherFlow button with the actual extension ID
-            const extensionLinks = document.querySelectorAll('a[href*="chrome-extension://"]');
-            extensionLinks.forEach(link => {
-                // 为点击添加额外处理
-                link.addEventListener('click', function(e) {
-                    // 本地存储标记，表示需要刷新会员状态
-                    localStorage.setItem('aetherflow_payment_success', 'true');
-                    localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
-                    localStorage.setItem('aetherflow_plan_type', planType || '');
-                });
-            });
+            // 更新打开AetherFlow按钮，使用当前的扩展ID
+            updateExtensionButtons();
         });
         
         // 尝试与扩展通信，通知支付成功
         function communicateWithExtension(checkoutId, planType) {
-            // 使用Chrome扩展消息机制
             try {
+                // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
                 
                 // 准备消息数据
                 const messageData = {
                     type: 'PAYMENT_SUCCESS',
                     checkoutId: checkoutId,
-                    planType: planType || 'monthly', // 默认为月度计划
+                    planType: planType || 'monthly',
                     timestamp: Date.now()
                 };
                 
                 console.log('Attempting to communicate with extension:', messageData);
                 
                 // 尝试发送消息到扩展
-                chrome.runtime.sendMessage(extensionId, messageData, function(response) {
-                    if (chrome.runtime.lastError) {
-                        console.log('Failed to communicate with extension:', chrome.runtime.lastError);
-                        // 失败时使用本地存储作为备份
-                        localStorage.setItem('aetherflow_payment_success', 'true');
-                        localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
-                        localStorage.setItem('aetherflow_plan_type', planType || '');
-                    } else {
-                        console.log('Successfully communicated with extension:', response);
-                    }
-                });
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    chrome.runtime.sendMessage(extensionId, messageData, function(response) {
+                        if (chrome.runtime.lastError) {
+                            console.log('Failed to communicate with extension:', chrome.runtime.lastError);
+                        } else {
+                            console.log('Successfully communicated with extension:', response);
+                        }
+                    });
+                } else {
+                    console.log('Chrome API not available. Data saved to localStorage for later retrieval.');
+                }
             } catch (error) {
                 console.error('Error communicating with extension:', error);
-                // 错误时使用本地存储作为备份
-                localStorage.setItem('aetherflow_payment_success', 'true');
-                localStorage.setItem('aetherflow_checkout_id', checkoutId || '');
-                localStorage.setItem('aetherflow_plan_type', planType || '');
             }
+        }
+        
+        // 更新扩展按钮的URL
+        function updateExtensionButtons() {
+            const extensionButtons = [
+                document.getElementById('open-extension-btn'),
+                document.getElementById('open-extension-btn-zh')
+            ];
+            
+            extensionButtons.forEach(button => {
+                if (button) {
+                    // 为按钮添加点击事件处理
+                    button.addEventListener('click', function(e) {
+                        // 如果按钮URL不是扩展URL，阻止默认行为
+                        if (!button.href.includes('chrome-extension://')) {
+                            e.preventDefault();
+                            // 在新标签打开Chrome商店页面
+                            window.open('https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki', '_blank');
+                        }
+                    });
+                }
+            });
         }
     </script>
 </body>

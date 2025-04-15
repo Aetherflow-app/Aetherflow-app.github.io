@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 同步加载Paddle脚本，确保正确初始化 -->
+    <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
 <body>
@@ -85,7 +85,7 @@
                             </ul>
                         </div>
                         <div class="card-action">
-                            <a href="#" class="btn btn-primary" onclick="return openPaddleCheckout('monthly')">Upgrade Now</a>
+                            <a href="#" class="btn btn-primary monthly-checkout" data-plan="monthly">Upgrade Now</a>
                         </div>
                     </div>
                     <div class="pricing-card premium annual-plan" style="display: none;">
@@ -107,7 +107,7 @@
                             </ul>
                         </div>
                         <div class="card-action">
-                            <a href="#" class="btn btn-primary" onclick="return openPaddleCheckout('annual')">Upgrade Now</a>
+                            <a href="#" class="btn btn-primary annual-checkout" data-plan="annual">Upgrade Now</a>
                         </div>
                     </div>
                 </div>
@@ -319,50 +319,19 @@
                 });
             });
             
-            // Paddle初始化 - 极简版本
-            try {
-                console.log('Initializing Paddle...');
-                
-                // 检查是否是沙盒环境
-                const urlParams = new URLSearchParams(window.location.search);
-                const isSandbox = urlParams.has('paddle_env') && urlParams.get('paddle_env') === 'sandbox';
-                
-                // 设置沙盒环境（仅当需要时）
-                if (isSandbox) {
-                    console.log('Setting sandbox environment');
-                    Paddle.Environment.set('sandbox');
-                }
-                
-                // 初始化Paddle - 最基本的方法
-                Paddle.Initialize({
-                    token: isSandbox 
-                        ? 'test_c624a7a4c9993fc8965d9c37db6'  // 沙盒令牌
-                        : 'live_74080bad93a7d3b962f98a52c93'  // 生产令牌
-                });
-                
-                console.log('Paddle initialized successfully');
-                
-                // 沙盒模式指示器
-                if (isSandbox) {
-                    const indicator = document.createElement('div');
-                    indicator.style.cssText = `
-                        position: fixed;
-                        bottom: 10px;
-                        left: 10px;
-                        background-color: #ff9800;
-                        color: white;
-                        padding: 5px 10px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        z-index: 9999;
-                    `;
-                    indicator.textContent = '🧪 SANDBOX MODE';
-                    document.body.appendChild(indicator);
-                }
-                
-            } catch (error) {
-                console.error('Failed to initialize Paddle:', error);
-            }
+            // 初始化Paddle支付
+            initializePaddle();
+            
+            // 设置结账点击处理函数
+            document.querySelector('.monthly-checkout').addEventListener('click', function(e) {
+                e.preventDefault();
+                openCheckout('monthly');
+            });
+            
+            document.querySelector('.annual-checkout').addEventListener('click', function(e) {
+                e.preventDefault();
+                openCheckout('annual');
+            });
         });
         
         // 切换月度和年度价格
@@ -385,35 +354,141 @@
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
         }
         
-        // 打开Paddle结账 - 极简官方版本
-        function openPaddleCheckout(plan) {
-            console.log('Opening checkout for plan:', plan);
+        // 初始化Paddle支付系统
+        function initializePaddle() {
+            // 判断是否是本地开发环境
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.hostname.includes('github.dev');
             
-            try {
-                // 检查是否是沙盒环境
-                const urlParams = new URLSearchParams(window.location.search);
-                const isSandbox = urlParams.has('paddle_env') && urlParams.get('paddle_env') === 'sandbox';
-                
-                // 价格ID
-                const priceId = plan === 'monthly' 
-                    ? (isSandbox ? 'pri_01jrw0em3kydrg4rw523w6s574' : 'pri_01jrfcwajex91zya4346h9ek32')
-                    : (isSandbox ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrfcz25f4zdktr7rtt1pnzpw');
-                
-                // 直接调用结账，最简单的配置
-                Paddle.Checkout.open({
-                    items: [{
-                        priceId: priceId,
-                        quantity: 1
-                    }]
-                });
-                
-            } catch (error) {
-                console.error('Error opening checkout:', error);
-                alert('Payment system error. Please try again later.');
+            // 如果是本地开发或测试环境，设置为沙盒环境
+            if (isLocalhost) {
+                Paddle.Environment.set('sandbox');
             }
             
-            return false; // 阻止链接默认行为
+            // 初始化Paddle
+            Paddle.Initialize({
+                token: isLocalhost ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
+                eventCallback: function(eventData) {
+                    console.log('Paddle event:', eventData);
+                    
+                    // 处理结账事件
+                    if (eventData.name === 'checkout.completed') {
+                        // 支付成功，处理跳转
+                        handleCheckoutCompleted(eventData.data);
+                    }
+                }
+            });
+            
+            // 价格预览功能 - 这是可选的，可以在实际应用中启用
+            // loadPricePreviews();
         }
+        
+        // 打开结账窗口
+        function openCheckout(planType) {
+            // 获取来源信息
+            const source = getUtmSource();
+            
+            // 确定使用哪个价格ID
+            const priceId = getPriceIdForPlan(planType);
+            
+            // 准备自定义数据
+            const customData = {
+                plan: planType,
+                source: source || 'website',
+                referrer: document.referrer || 'direct'
+            };
+            
+            // 获取URL参数并传递
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('utm_campaign')) {
+                customData.utm_campaign = urlParams.get('utm_campaign');
+            }
+            if (urlParams.has('utm_content')) {
+                customData.utm_content = urlParams.get('utm_content');
+            }
+            
+            // 打开Paddle结账
+            Paddle.Checkout.open({
+                items: [
+                    {
+                        priceId: priceId,
+                        quantity: 1
+                    }
+                ],
+                customData: customData,
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'light',
+                    locale: 'en',
+                    successUrl: getSuccessUrl(planType, source)
+                }
+            });
+        }
+        
+        // 根据计划类型获取价格ID
+        function getPriceIdForPlan(planType) {
+            // 判断是否是本地开发环境
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.hostname.includes('github.dev');
+            
+            // 根据环境和计划类型返回对应的价格ID
+            if (isLocalhost) {
+                // 沙盒环境的价格ID
+                return planType === 'annual' ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrw0em3kydrg4rw523w6s574';
+            } else {
+                // 生产环境的价格ID
+                return planType === 'annual' ? 'pri_01jrfcz25f4zdktr7rtt1pnzpw' : 'pri_01jrfcwajex91zya4346h9ek32';
+            }
+        }
+        
+        // 获取UTM来源
+        function getUtmSource() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('utm_source') || localStorage.getItem('aetherflow_utm_source') || null;
+        }
+        
+        // 构建成功URL
+        function getSuccessUrl(planType, source) {
+            let successUrl = 'https://' + window.location.hostname + '/success.html?plan=' + planType;
+            
+            // 添加来源参数
+            if (source) {
+                successUrl += '&source=' + encodeURIComponent(source);
+            }
+            
+            return successUrl;
+        }
+        
+        // 处理结账完成事件
+        function handleCheckoutCompleted(data) {
+            console.log('Checkout completed:', data);
+            
+            // 从事件数据中获取信息
+            const checkoutId = data.checkout?.id;
+            const planType = data.items?.[0]?.price?.productType || 'monthly';
+            
+            // 构建跳转URL
+            let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
+            
+            // 跳转到成功页面
+            window.location.href = redirectUrl;
+        }
+        
+        // 保存UTM来源到localStorage（如果存在）
+        function saveUtmParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('utm_source')) {
+                localStorage.setItem('aetherflow_utm_source', urlParams.get('utm_source'));
+            }
+            if (urlParams.has('utm_campaign')) {
+                localStorage.setItem('aetherflow_utm_campaign', urlParams.get('utm_campaign'));
+            }
+        }
+        
+        // 在页面加载时保存UTM参数
+        saveUtmParameters();
     </script>
 </body>
 </html> 

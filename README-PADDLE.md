@@ -1,6 +1,49 @@
 # AetherFlow Paddle支付集成说明
 
-本文档提供AetherFlow项目中Paddle支付集成的配置和使用说明。
+本文档说明如何将Paddle支付系统集成到AetherFlow应用的官网中。
+
+## 集成目标
+
+1. 在pricing.html页面中集成Paddle Checkout.js脚本
+2. 实现支付按钮和Paddle结账流程
+3. 添加支付来源跟踪参数处理
+4. 设计支付成功/取消后的回调机制
+5. 完整地实现Paddle客户端API集成
+
+## 配置信息
+
+### 沙盒环境（测试用）
+- **客户端Token**: test_c624a7a4c9993fc8965d9c37db6
+- **产品ID**: pro_01jrw0cx348x89jy2y47fmfeyx
+- **月度计划ID**: pri_01jrw0em3kydrg4rw523w6s574
+- **年度计划ID**: pri_01jrw0f7y1kfw9jc967eswbnrs
+
+### 生产环境
+- **客户端Token**: live_74080bad93a7d3b962f98a52c93
+- **产品ID**: pro_01jrcqtf7wa1mwr0hy4h31p9v
+- **月度计划ID**: pri_01jrfcwajex91zya4346h9ek32
+- **年度计划ID**: pri_01jrfcz25f4zdktr7rtt1pnzpw
+
+## 实现步骤
+
+1. 在pricing.html页面中引入Paddle.js
+2. 初始化Paddle，根据环境使用不同的配置
+3. 更新支付按钮，连接到Paddle结账功能
+4. 实现支付成功和取消后的回调处理
+5. 为支付按钮添加来源跟踪参数
+
+## 测试说明
+
+在沙盒环境中，可使用以下测试卡信息：
+- 卡号：4000 0566 5566 5556 或 4242 4242 4242 4242
+- 有效期：任何未来日期
+- CVV：任何3位数字
+
+## 注意事项
+
+- 确保区分沙盒环境和生产环境
+- 支付成功后重定向到success.html页面
+- 确保支付相关参数正确传递给success.html页面
 
 ## 配置项
 
