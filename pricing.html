@@ -443,8 +443,8 @@
                 const callbacks = buildCallbackUrls();
                 console.log('回调URL:', callbacks);
                 
-                // 初始化 Paddle Billing
-                Paddle.configure({
+                // 初始化 Paddle Billing - 这里使用 Initialize 而不是 configure
+                Paddle.Initialize({
                     token: clientId,
                     environment: isDevEnvironment ? 'sandbox' : 'production',
                     checkout: {
@@ -477,13 +477,6 @@
                     return false;
                 }
                 
-                if (typeof Paddle.Checkout === 'undefined') {
-                    console.error('Paddle.Checkout未定义!');
-                    console.groupEnd();
-                    alert('支付系统组件未加载，请刷新页面或稍后再试');
-                    return false;
-                }
-                
                 // 环境检测
                 const env = getEnvironment();
                 console.log('使用环境:', env);
@@ -509,7 +502,7 @@
                         }
                     ],
                     customer: {
-                        email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
+                        email: '' // 留空让用户在结账时填写
                     },
                     customData: {
                         source: 'website',
@@ -519,7 +512,7 @@
                 
                 console.log('结账参数:', checkoutParams);
                 
-                // 打开结账界面
+                // 打开结账界面 - 使用 Paddle.Checkout.open 方法
                 Paddle.Checkout.open(checkoutParams);
                 console.log('结账窗口已打开');
                 console.groupEnd();
@@ -529,7 +522,7 @@
             } catch (error) {
                 console.error('结账过程出错:', error);
                 console.groupEnd();
-                alert('支付系统出现问题，请稍后再试');
+                alert('支付系统出现问题，请稍后再试: ' + error.message);
                 return false;
             }
         }
