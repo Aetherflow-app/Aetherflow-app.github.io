@@ -416,6 +416,80 @@
             }
         };
         
+        // 创建环境管理工具
+        const PaddleEnv = {
+            // 检查是否应该使用沙盒
+            shouldUseSandbox: function() {
+                // 1. 检查URL参数
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('paddle_env')) {
+                    const envParam = urlParams.get('paddle_env');
+                    // 保存到本地存储以便后续页面使用
+                    localStorage.setItem('paddle_environment', envParam);
+                    return envParam === 'sandbox';
+                }
+                
+                // 2. 检查本地存储
+                const savedEnv = localStorage.getItem('paddle_environment');
+                if (savedEnv) {
+                    return savedEnv === 'sandbox';
+                }
+                
+                // 3. 检查是否是开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1';
+                return isLocalhost;
+            },
+            
+            // 获取当前环境名称
+            getEnvironmentName: function() {
+                return this.shouldUseSandbox() ? 'sandbox' : 'production';
+            },
+            
+            // 获取客户端令牌
+            getClientToken: function() {
+                return this.shouldUseSandbox() ? 
+                    'test_c624a7a4c9993fc8965d9c37db6' :  // 沙盒环境 token
+                    'live_74080bad93a7d3b962f98a52c93';   // 生产环境 token
+            },
+            
+            // 获取环境标识UI
+            addEnvironmentIndicator: function() {
+                // 如果是沙盒环境，添加一个环境指示器
+                if (this.shouldUseSandbox()) {
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = `
+                        position: fixed;
+                        bottom: 10px;
+                        left: 10px;
+                        background-color: #ff9800;
+                        color: white;
+                        padding: 5px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        z-index: 9999;
+                        cursor: pointer;
+                    `;
+                    indicator.textContent = '🧪 SANDBOX MODE';
+                    indicator.title = 'Click to switch to production mode';
+                    indicator.onclick = function() {
+                        localStorage.setItem('paddle_environment', 'production');
+                        window.location.reload();
+                    };
+                    document.body.appendChild(indicator);
+                }
+            },
+            
+            // 切换环境
+            toggleEnvironment: function() {
+                const currentEnv = this.getEnvironmentName();
+                const newEnv = currentEnv === 'sandbox' ? 'production' : 'sandbox';
+                localStorage.setItem('paddle_environment', newEnv);
+                console.log(`Switching Paddle environment from ${currentEnv} to ${newEnv}. Reloading...`);
+                window.location.reload();
+            }
+        };
+        
         // 初始化Paddle Billing
         function initializePaddleBilling() {
             try {
@@ -432,26 +506,22 @@
                     console.log('Paddle version:', Paddle.version);
                 }
                 
-                // 判断是否是开发环境
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                // 使用环境管理工具检测环境
+                const useSandbox = PaddleEnv.shouldUseSandbox();
+                const environmentName = PaddleEnv.getEnvironmentName();
+                const clientId = PaddleEnv.getClientToken();
+                
                 console.log('Current hostname:', window.location.hostname);
-                console.log('Is localhost environment:', isLocalhost);
-                
-                // 设置环境和客户端ID
-                // 注意: Paddle Billing 使用 client-id 而不是 vendor-id
-                const clientId = isLocalhost ? 
-                    'test_c624a7a4c9993fc8965d9c37db6' :  // 沙盒环境 token
-                    'live_74080bad93a7d3b962f98a52c93';   // 生产环境 token
-                
+                console.log('Using Paddle environment:', environmentName);
                 console.log('Using client ID:', clientId);
                 
                 // 设置环境（仅在沙盒环境需要）
-                if (isLocalhost) {
+                if (useSandbox) {
                     console.log('Setting sandbox environment');
                     Paddle.Environment.set('sandbox');
                 }
                 
-                // 初始化 Paddle Billing（v2 API 不接受 environment 参数）
+                // 初始化 Paddle Billing
                 Paddle.Initialize({
                     token: clientId,
                     checkout: {
@@ -472,6 +542,12 @@
                 
                 console.log('Paddle Billing initialized successfully');
                 
+                // 添加环境指示器
+                PaddleEnv.addEnvironmentIndicator();
+                
+                // 添加环境切换按钮到页面
+                addEnvironmentToggleButton();
+                
             } catch (error) {
                 console.error('Error initializing Paddle Billing:', error);
                 
@@ -487,6 +563,39 @@
                     console.warn('Document is not fully loaded yet. Current state:', document.readyState);
                 }
             }
+        }
+        
+        // 添加环境切换按钮
+        function addEnvironmentToggleButton() {
+            // 只在价格卡片部分添加
+            const pricingSection = document.querySelector('.pricing-details');
+            if (!pricingSection) return;
+            
+            const toggleContainer = document.createElement('div');
+            toggleContainer.style.cssText = `
+                display: flex;
+                justify-content: center;
+                margin-top: 20px;
+                opacity: 0.6;
+            `;
+            
+            const toggleButton = document.createElement('button');
+            toggleButton.style.cssText = `
+                background-color: #334155;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                cursor: pointer;
+            `;
+            toggleButton.textContent = `🔄 Switch to ${PaddleEnv.getEnvironmentName() === 'sandbox' ? 'Production' : 'Sandbox'} Mode`;
+            toggleButton.onclick = function() {
+                PaddleEnv.toggleEnvironment();
+            };
+            
+            toggleContainer.appendChild(toggleButton);
+            pricingSection.appendChild(toggleContainer);
         }
         
         // 打开Paddle Billing结账窗口
@@ -508,19 +617,20 @@
                     return false;
                 }
                 
-                // 判断是否是开发环境
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                // 使用环境管理工具确定环境
+                const environmentName = PaddleEnv.getEnvironmentName();
                 
                 // 获取正确的价格ID
-                const config = priceConfigs[isLocalhost ? 'sandbox' : 'production'];
+                const config = priceConfigs[environmentName];
                 const priceId = plan === 'monthly' ? config.monthly : config.annual;
                 
-                console.log('Using environment:', isLocalhost ? 'sandbox' : 'production');
+                console.log('Using environment:', environmentName);
                 console.log('Selected price ID:', priceId);
                 
                 // 打开结账界面
                 try {
-                    Paddle.Checkout.open({
+                    // 创建完整的结账配置对象
+                    const checkoutConfig = {
                         // 订阅商品
                         items: [
                             {
@@ -544,9 +654,15 @@
                             locale: 'en-US'
                         },
                         // 成功和取消URL
-                        successURL: window.location.origin + '/success.html?checkout_id={{checkoutId}}',
+                        successURL: window.location.origin + '/success.html?checkout={{checkoutId}}',
                         cancelURL: window.location.origin + '/cancel.html'
-                    });
+                    };
+
+                    // 详细记录结账配置
+                    console.log('Checkout configuration:', JSON.stringify(checkoutConfig, null, 2));
+
+                    // 打开结账
+                    Paddle.Checkout.open(checkoutConfig);
                     console.log('Checkout window opened successfully');
                 } catch (checkoutError) {
                     console.error('Failed to open checkout:', checkoutError);
