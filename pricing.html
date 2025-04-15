@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Paddle Billing JS 集成 -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" type="text/javascript"></script>
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" async defer></script>
 </head>
 <body>
     <header>
@@ -445,14 +445,24 @@
                 
                 console.log('Using client ID:', clientId);
                 
-                // 初始化 Paddle Billing
+                // 设置环境（仅在沙盒环境需要）
+                if (isLocalhost) {
+                    console.log('Setting sandbox environment');
+                    Paddle.Environment.set('sandbox');
+                }
+                
+                // 初始化 Paddle Billing（v2 API 不接受 environment 参数）
                 Paddle.Initialize({
                     token: clientId,
-                    environment: isLocalhost ? 'sandbox' : 'production',
-                    checkout: {
-                        theme: 'light',
-                        successUrl: window.location.origin + '/success.html?checkout={checkout}&plan={plan}',
-                        cancelUrl: window.location.origin + '/cancel.html'
+                    locale: 'zh-CN',
+                    eventCallback: function(eventData) {
+                        // 记录所有事件
+                        console.log('Paddle事件:', eventData.name, eventData.data);
+                        
+                        // 特别关注错误事件
+                        if (eventData.name === 'checkout.error') {
+                            console.error('Paddle结账错误:', eventData.data);
+                        }
                     }
                 });
                 
@@ -505,21 +515,48 @@
                 console.log('Selected price ID:', priceId);
                 
                 // 打开结账界面
-                Paddle.Checkout.open({
-                    items: [
-                        {
-                            priceId: priceId,
-                            quantity: 1
-                        }
-                    ],
-                    customer: {
-                        email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
-                    },
-                    customData: {
-                        source: window.location.search ? new URLSearchParams(window.location.search).get('source') || 'website' : 'website',
-                        plan: plan
+                try {
+                    Paddle.Checkout.open({
+                        // 订阅商品
+                        items: [
+                            {
+                                priceId: priceId,
+                                quantity: 1
+                            }
+                        ],
+                        // 客户信息
+                        customer: {
+                            email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
+                        },
+                        // 自定义数据
+                        customData: {
+                            plan: plan,
+                            source: window.location.search ? new URLSearchParams(window.location.search).get('source') || 'website' : 'website'
+                        },
+                        // 结账设置
+                        settings: {
+                            displayMode: 'overlay',
+                            theme: 'light',
+                            locale: 'zh-CN'
+                        },
+                        // 成功和取消URL
+                        successURL: window.location.origin + '/success.html?checkout_id={{checkoutId}}',
+                        cancelURL: window.location.origin + '/cancel.html'
+                    });
+                    console.log('Checkout window opened successfully');
+                } catch (checkoutError) {
+                    console.error('Failed to open checkout:', checkoutError);
+                    
+                    // 更详细地记录错误信息
+                    if (checkoutError instanceof Error) {
+                        console.error('Checkout error name:', checkoutError.name);
+                        console.error('Checkout error message:', checkoutError.message);
+                        console.error('Checkout error stack:', checkoutError.stack);
                     }
-                });
+                    
+                    // 显示用户友好的错误提示
+                    alert('无法打开支付页面，请稍后再试或联系客服。');
+                }
                 
                 return false; // 阻止链接默认行为
                 
