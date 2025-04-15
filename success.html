@@ -168,6 +168,11 @@
                     if (successMessage) {
                         successMessage.innerHTML += '<br><small>Transaction processed with Paddle Billing.</small>';
                     }
+                    
+                    // 重要：将结账ID和时间保存到localStorage，以便扩展检测支付状态
+                    localStorage.setItem('aetherflow_last_checkout', checkoutId);
+                    localStorage.setItem('aetherflow_checkout_time', Date.now().toString());
+                    console.log('Payment information saved to localStorage for extension verification');
                 } catch (error) {
                     console.error('Error updating success page:', error);
                 }
