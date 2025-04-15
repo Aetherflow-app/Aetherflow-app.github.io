@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Paddle Billing JS 集成 -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" type="text/javascript"></script>
 </head>
 <body>
     <header>
@@ -319,8 +319,35 @@
                 });
             });
             
-            // 初始化Paddle Billing
-            initializePaddleBilling();
+            // 确认 DOM 完全加载后才初始化 Paddle Billing
+            setTimeout(() => {
+                console.log('DOM is fully loaded, initializing Paddle Billing...');
+                // 确保Paddle.js加载完成，然后初始化
+                ensurePaddleScriptLoaded()
+                    .then(() => {
+                        console.log('Paddle.js is ready, initializing...');
+                        initializePaddleBilling();
+                    })
+                    .catch(error => {
+                        console.error('Failed to initialize Paddle:', error);
+                        // 显示用户友好的错误信息
+                        const errorContainer = document.createElement('div');
+                        errorContainer.className = 'paddle-error-notice';
+                        errorContainer.style.color = 'red';
+                        errorContainer.style.padding = '10px';
+                        errorContainer.style.margin = '10px 0';
+                        errorContainer.style.border = '1px solid red';
+                        errorContainer.style.borderRadius = '4px';
+                        errorContainer.style.backgroundColor = '#fff8f8';
+                        errorContainer.textContent = 'The payment system is currently unavailable. Please try again later or contact support.';
+                        
+                        // 插入到页面中
+                        const pricingCards = document.querySelector('.pricing-cards-container');
+                        if (pricingCards) {
+                            pricingCards.insertBefore(errorContainer, pricingCards.firstChild);
+                        }
+                    });
+            }, 500);
         });
         
         // 切换月度和年度价格
@@ -343,6 +370,40 @@
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
         }
         
+        // 确保Paddle.js正确加载
+        function ensurePaddleScriptLoaded() {
+            return new Promise((resolve, reject) => {
+                // 检查是否已存在
+                if (typeof Paddle !== 'undefined') {
+                    console.log('Paddle.js already loaded');
+                    resolve();
+                    return;
+                }
+                
+                console.log('Dynamically loading Paddle.js...');
+                
+                // 创建script元素
+                const script = document.createElement('script');
+                script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+                script.type = 'text/javascript';
+                
+                // 加载成功处理
+                script.onload = () => {
+                    console.log('Paddle.js loaded successfully');
+                    resolve();
+                };
+                
+                // 加载失败处理
+                script.onerror = (error) => {
+                    console.error('Failed to load Paddle.js:', error);
+                    reject(new Error('Failed to load Paddle.js'));
+                };
+                
+                // 添加到文档
+                document.head.appendChild(script);
+            });
+        }
+        
         // Paddle Billing 产品/价格ID (注意：Billing API使用priceId而非productId)
         const priceConfigs = {
             production: {
@@ -360,6 +421,17 @@
             try {
                 console.log('Initializing Paddle Billing...');
                 
+                // 确保 Paddle 对象存在
+                if (typeof Paddle === 'undefined') {
+                    console.error('Paddle object is not available. Script might not be loaded correctly.');
+                    return;
+                }
+                
+                // 输出 Paddle 版本信息（如果可用）
+                if (Paddle.version) {
+                    console.log('Paddle version:', Paddle.version);
+                }
+                
                 // 判断是否是开发环境
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 console.log('Current hostname:', window.location.hostname);
@@ -374,7 +446,7 @@
                 console.log('Using client ID:', clientId);
                 
                 // 初始化 Paddle Billing
-                Paddle.configure({
+                Paddle.Initialize({
                     token: clientId,
                     environment: isLocalhost ? 'sandbox' : 'production',
                     checkout: {
@@ -388,6 +460,18 @@
                 
             } catch (error) {
                 console.error('Error initializing Paddle Billing:', error);
+                
+                // 更详细地记录错误信息
+                if (error instanceof Error) {
+                    console.error('Error name:', error.name);
+                    console.error('Error message:', error.message);
+                    console.error('Error stack:', error.stack);
+                }
+                
+                // 加载状态检查
+                if (document.readyState !== 'complete') {
+                    console.warn('Document is not fully loaded yet. Current state:', document.readyState);
+                }
             }
         }
         
@@ -397,9 +481,16 @@
                 console.log('Paddle Billing checkout triggered for plan:', plan);
                 
                 // 检查Paddle对象是否存在
-                if (typeof Paddle === 'undefined' || typeof Paddle.Checkout === 'undefined') {
+                if (typeof Paddle === 'undefined') {
                     console.error('Paddle Billing API not loaded correctly');
                     alert('Payment system unavailable. Please try again later.');
+                    return false;
+                }
+                
+                // 确保 Paddle 已初始化
+                if (!Paddle.Checkout) {
+                    console.error('Paddle Billing API not initialized correctly');
+                    alert('Payment system initialization failed. Please try again later.');
                     return false;
                 }
                 
