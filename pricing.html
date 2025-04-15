@@ -627,55 +627,51 @@
                 console.log('Using environment:', environmentName);
                 console.log('Selected price ID:', priceId);
                 
-                // 打开结账界面
-                try {
-                    // 创建完整的结账配置对象
-                    const checkoutConfig = {
-                        // 订阅商品
-                        items: [
-                            {
-                                priceId: priceId,
-                                quantity: 1
-                            }
-                        ],
-                        // 客户信息
-                        customer: {
-                            email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
-                        },
-                        // 自定义数据
-                        customData: {
-                            plan: plan,
-                            source: window.location.search ? new URLSearchParams(window.location.search).get('source') || 'website' : 'website'
-                        },
-                        // 结账设置
-                        settings: {
-                            displayMode: 'overlay',
-                            theme: 'light',
-                            locale: 'en-US',
-                            successUrl: window.location.origin + '/success.html?checkout={{checkoutId}}',
-                            closeUrl: window.location.origin + '/cancel.html'
+                // 创建完整的结账配置对象，按照官方文档结构排列
+                const checkoutConfig = {
+                    // 订阅商品
+                    items: [
+                        {
+                            priceId: priceId,
+                            quantity: 1
                         }
-                    };
-
-                    // 详细记录结账配置
-                    console.log('Checkout configuration:', JSON.stringify(checkoutConfig, null, 2));
-
-                    // 打开结账
-                    Paddle.Checkout.open(checkoutConfig);
-                    console.log('Checkout window opened successfully');
-                } catch (checkoutError) {
-                    console.error('Failed to open checkout:', checkoutError);
-                    
-                    // 更详细地记录错误信息
-                    if (checkoutError instanceof Error) {
-                        console.error('Checkout error name:', checkoutError.name);
-                        console.error('Checkout error message:', checkoutError.message);
-                        console.error('Checkout error stack:', checkoutError.stack);
+                    ],
+                    // 结账设置
+                    settings: {
+                        displayMode: 'overlay',
+                        theme: 'light',
+                        locale: 'en-US',
+                        successUrl: window.location.origin + '/success.html?checkout={{checkoutId}}',
+                        closeUrl: window.location.origin + '/cancel.html'
+                    },
+                    // 客户信息
+                    customer: {
+                        email: 'customer@example.com' // 提供默认邮箱，用户可在结账时修改
+                    },
+                    // 自定义数据
+                    customData: {
+                        plan: plan,
+                        source: window.location.search ? new URLSearchParams(window.location.search).get('source') || 'website' : 'website'
                     }
+                };
+
+                // 详细记录结账配置
+                console.log('Checkout configuration:', JSON.stringify(checkoutConfig, null, 2));
+
+                // 打开结账，添加成功和错误回调
+                Paddle.Checkout.open(checkoutConfig)
+                    .then((data) => {
+                        console.log('Checkout completed successfully:', data);
+                    })
+                    .catch((error) => {
+                        console.error('Checkout error:', error);
+                        if (error && error.code) {
+                            console.error('Error code:', error.code);
+                            console.error('Error message:', error.message);
+                        }
+                    });
                     
-                    // 显示用户友好的错误提示
-                    alert('无法打开支付页面，请稍后再试或联系客服。');
-                }
+                console.log('Checkout window opened successfully');
                 
                 return false; // 阻止链接默认行为
                 
