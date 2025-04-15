@@ -658,19 +658,8 @@
                 // 详细记录结账配置
                 console.log('Checkout configuration:', JSON.stringify(checkoutConfig, null, 2));
 
-                // 打开结账，添加成功和错误回调
-                Paddle.Checkout.open(checkoutConfig)
-                    .then((data) => {
-                        console.log('Checkout completed successfully:', data);
-                    })
-                    .catch((error) => {
-                        console.error('Checkout error:', error);
-                        if (error && error.code) {
-                            console.error('Error code:', error.code);
-                            console.error('Error message:', error.message);
-                        }
-                    });
-                    
+                // 打开结账窗口，不使用Promise链
+                Paddle.Checkout.open(checkoutConfig);
                 console.log('Checkout window opened successfully');
                 
                 return false; // 阻止链接默认行为
