@@ -356,19 +356,43 @@
         
         // 初始化Paddle支付系统
         function initializePaddle() {
-            // 判断是否是本地开发环境
-            const isLocalhost = window.location.hostname === 'localhost' || 
-                               window.location.hostname === '127.0.0.1' ||
-                               window.location.hostname.includes('github.dev');
+            // 1. 检查URL参数是否有明确的环境指定
+            const urlParams = new URLSearchParams(window.location.search);
+            const envParam = urlParams.get('env');
             
-            // 如果是本地开发或测试环境，设置为沙盒环境
-            if (isLocalhost) {
+            // 2. 判断环境
+            // 明确参数指定的环境 > 域名判断环境
+            let useSandbox = false;
+            
+            // 如果URL参数明确指定了环境
+            if (envParam) {
+                useSandbox = envParam === 'sandbox' || envParam === 'test';
+            } else {
+                // 判断开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1' ||
+                                   window.location.hostname.includes('github.dev');
+                                   
+                // 判断非生产环境
+                const isNonProduction = isLocalhost || 
+                                       window.location.hostname.includes('github.io') ||
+                                       window.location.hostname.includes('test');
+                                   
+                // 非生产环境默认使用沙盒
+                useSandbox = isNonProduction;
+            }
+            
+            // 3. 设置环境和初始化Paddle
+            if (useSandbox) {
                 Paddle.Environment.set('sandbox');
+                console.log('Using Paddle SANDBOX environment');
+            } else {
+                console.log('Using Paddle PRODUCTION environment');
             }
             
             // 初始化Paddle
             Paddle.Initialize({
-                token: isLocalhost ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
+                token: useSandbox ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
                 eventCallback: function(eventData) {
                     console.log('Paddle event:', eventData);
                     
@@ -380,8 +404,24 @@
                 }
             });
             
-            // 价格预览功能 - 这是可选的，可以在实际应用中启用
-            // loadPricePreviews();
+            // 4. 记录当前环境，用于调试和测试
+            localStorage.setItem('aetherflow_env', useSandbox ? 'sandbox' : 'production');
+            
+            // 如果需要在UI上显示当前环境（仅在非生产环境）
+            if (useSandbox) {
+                const envIndicator = document.createElement('div');
+                envIndicator.style.position = 'fixed';
+                envIndicator.style.bottom = '10px';
+                envIndicator.style.left = '10px';
+                envIndicator.style.padding = '5px 10px';
+                envIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                envIndicator.style.color = '#900';
+                envIndicator.style.borderRadius = '4px';
+                envIndicator.style.fontSize = '12px';
+                envIndicator.style.zIndex = '9999';
+                envIndicator.textContent = 'SANDBOX MODE';
+                document.body.appendChild(envIndicator);
+            }
         }
         
         // 打开结账窗口
@@ -428,13 +468,11 @@
         
         // 根据计划类型获取价格ID
         function getPriceIdForPlan(planType) {
-            // 判断是否是本地开发环境
-            const isLocalhost = window.location.hostname === 'localhost' || 
-                               window.location.hostname === '127.0.0.1' ||
-                               window.location.hostname.includes('github.dev');
+            // 获取当前环境
+            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
             
             // 根据环境和计划类型返回对应的价格ID
-            if (isLocalhost) {
+            if (useSandbox) {
                 // 沙盒环境的价格ID
                 return planType === 'annual' ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrw0em3kydrg4rw523w6s574';
             } else {
@@ -451,14 +489,33 @@
         
         // 构建成功URL
         function getSuccessUrl(planType, source) {
-            let successUrl = 'https://' + window.location.hostname + '/success.html?plan=' + planType;
+            // 获取基础URL
+            let baseUrl;
             
-            // 添加来源参数
-            if (source) {
-                successUrl += '&source=' + encodeURIComponent(source);
+            // 检查环境
+            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
+            
+            // 如果是localhost，使用相对路径
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                baseUrl = '/success.html';
+            } else {
+                // 使用完整URL
+                baseUrl = window.location.origin + '/success.html';
             }
             
-            return successUrl;
+            // 构建URL参数
+            const params = new URLSearchParams();
+            params.set('plan', planType);
+            if (source) {
+                params.set('source', source);
+            }
+            
+            // 添加环境参数（仅在沙盒环境）
+            if (useSandbox) {
+                params.set('env', 'sandbox');
+            }
+            
+            return baseUrl + '?' + params.toString();
         }
         
         // 处理结账完成事件

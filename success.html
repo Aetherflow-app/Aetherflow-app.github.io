@@ -227,11 +227,37 @@
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
+            const envParam = urlParams.get('env');
+            
+            // 判断环境
+            const isSandbox = envParam === 'sandbox' || 
+                            envParam === 'test' || 
+                            localStorage.getItem('aetherflow_env') === 'sandbox';
+            
+            // 如果是沙盒环境，显示相应标识
+            if (isSandbox) {
+                const envIndicator = document.createElement('div');
+                envIndicator.style.position = 'fixed';
+                envIndicator.style.bottom = '10px';
+                envIndicator.style.left = '10px';
+                envIndicator.style.padding = '5px 10px';
+                envIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                envIndicator.style.color = '#900';
+                envIndicator.style.borderRadius = '4px';
+                envIndicator.style.fontSize = '12px';
+                envIndicator.style.zIndex = '9999';
+                envIndicator.textContent = 'SANDBOX PAYMENT';
+                document.body.appendChild(envIndicator);
+                
+                // 记录环境
+                localStorage.setItem('aetherflow_env', 'sandbox');
+            }
             
             // 如果有结账参数，使用它们进行验证
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
+                console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
                 
                 // 更新交易ID显示
                 const transactionElements = [
