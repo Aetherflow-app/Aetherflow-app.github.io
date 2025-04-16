@@ -5,9 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AetherFlow - Pricing</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/auth-modal.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- 引入Firebase配置 -->
+    <script src="assets/js/firebase-config.js"></script>
+    <script src="assets/js/auth-service.js"></script>
+    <script src="assets/js/auth-modal.js"></script>
+    <script src="assets/js/user-avatar.js"></script>
     <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
@@ -27,6 +37,8 @@
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
             </nav>
+            <!-- 添加用户头像区域 -->
+            <div class="header-user-container"></div>
         </div>
     </header>
 
@@ -71,7 +83,7 @@
                         <div class="most-popular">Most Popular</div>
                         <div class="card-header">
                             <h3>Pro</h3>
-                            <div class="price">$4.99</div>
+                            <div class="price">$3.99</div>
                             <p>per month</p>
                         </div>
                         <div class="card-features">
@@ -325,12 +337,12 @@
             // 设置结账点击处理函数
             document.querySelector('.monthly-checkout').addEventListener('click', function(e) {
                 e.preventDefault();
-                openCheckout('monthly');
+                handleCheckoutClick('monthly');
             });
             
             document.querySelector('.annual-checkout').addEventListener('click', function(e) {
                 e.preventDefault();
-                openCheckout('annual');
+                handleCheckoutClick('annual');
             });
         });
         
@@ -352,6 +364,37 @@
         // 滚动到价格计划部分
         function scrollToPlans() {
             document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 检查支付前是否已登录
+        function handleCheckoutClick(planType) {
+            // 检查用户是否已登录
+            if (!AuthService.isAuthenticated()) {
+                // 未登录，打开登录模态框
+                window.authModal.open('login');
+                
+                // 保存计划类型，登录后继续结账
+                sessionStorage.setItem('pending_checkout_plan', planType);
+                
+                // 添加一次性监听器，用户登录后自动继续结账流程
+                const checkLoginAndContinue = function(user) {
+                    if (user) {
+                        const pendingPlan = sessionStorage.getItem('pending_checkout_plan');
+                        if (pendingPlan) {
+                            sessionStorage.removeItem('pending_checkout_plan');
+                            setTimeout(() => openCheckout(pendingPlan), 500);
+                        }
+                        // 移除监听器
+                        AuthService.observers = AuthService.observers.filter(obs => obs !== checkLoginAndContinue);
+                    }
+                };
+                
+                // 添加到观察者
+                AuthService.addObserver(checkLoginAndContinue);
+            } else {
+                // 已登录，直接继续结账
+                openCheckout(planType);
+            }
         }
         
         // 初始化Paddle支付系统
@@ -432,12 +475,21 @@
             // 确定使用哪个价格ID
             const priceId = getPriceIdForPlan(planType);
             
+            // 获取当前登录用户
+            const currentUser = AuthService.getCurrentUser();
+            
             // 准备自定义数据
             const customData = {
                 plan: planType,
                 source: source || 'website',
                 referrer: document.referrer || 'direct'
             };
+            
+            // 添加用户ID
+            if (currentUser) {
+                customData.userId = currentUser.uid;
+                customData.userEmail = currentUser.email;
+            }
             
             // 获取URL参数并传递
             const urlParams = new URLSearchParams(window.location.search);
@@ -506,6 +558,13 @@
             // 构建URL参数
             const params = new URLSearchParams();
             params.set('plan', planType);
+            
+            // 获取当前登录用户的ID
+            const currentUser = AuthService.getCurrentUser();
+            if (currentUser) {
+                params.set('uid', currentUser.uid);
+            }
+            
             if (source) {
                 params.set('source', source);
             }
@@ -526,8 +585,16 @@
             const checkoutId = data.checkout?.id;
             const planType = data.items?.[0]?.price?.productType || 'monthly';
             
+            // 获取当前登录用户的ID
+            const userId = AuthService.getCurrentUser()?.uid;
+            
             // 构建跳转URL
             let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
+            
+            // 添加用户ID
+            if (userId) {
+                redirectUrl += '&uid=' + encodeURIComponent(userId);
+            }
             
             // 跳转到成功页面
             window.location.href = redirectUrl;

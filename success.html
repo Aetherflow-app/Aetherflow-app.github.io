@@ -5,9 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - AetherFlow</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/auth-modal.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- 引入Firebase配置 -->
+    <script src="assets/js/firebase-config.js"></script>
+    <script src="assets/js/auth-service.js"></script>
+    <script src="assets/js/auth-modal.js"></script>
+    <script src="assets/js/user-avatar.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -101,6 +111,8 @@
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
             </nav>
+            <!-- 添加用户头像区域 -->
+            <div class="header-user-container"></div>
         </div>
     </header>
 
@@ -146,6 +158,8 @@
                     <p class="zh" style="display:none;">交易ID：<span id="transaction-id-zh">处理中...</span></p>
                     <p class="en">Plan: <span id="plan-type">Monthly</span></p>
                     <p class="zh" style="display:none;">方案：<span id="plan-type-zh">月度</span></p>
+                    <p class="en">User Account: <span id="user-email">-</span></p>
+                    <p class="zh" style="display:none;">用户账号：<span id="user-email-zh">-</span></p>
                 </div>
                 
                 <div class="cta-buttons">
@@ -227,6 +241,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
+            const userId = urlParams.get('uid');
             const envParam = urlParams.get('env');
             
             // 判断环境
@@ -253,10 +268,14 @@
                 localStorage.setItem('aetherflow_env', 'sandbox');
             }
             
+            // 显示用户信息
+            updateUserInfo();
+            
             // 如果有结账参数，使用它们进行验证
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
+                console.log('User ID:', userId);
                 console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
                 
                 // 更新交易ID显示
@@ -284,20 +303,83 @@
                 }
                 
                 // 尝试与扩展通信，更新会员状态
-                communicateWithExtension(checkoutId, planType);
+                communicateWithExtension(checkoutId, planType, userId);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
                 localStorage.setItem('aetherflow_checkout_id', checkoutId);
                 localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
+                if (userId) {
+                    localStorage.setItem('aetherflow_user_id', userId);
+                }
+                
+                // 添加Firebase数据库记录（如果用户已登录）
+                updateSubscriptionInFirestore(checkoutId, planType, userId);
             }
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
             updateExtensionButtons();
         });
         
+        // 更新用户信息显示
+        function updateUserInfo() {
+            const userEmailElement = document.getElementById('user-email');
+            const userEmailElementZh = document.getElementById('user-email-zh');
+            
+            // 检查是否有登录用户
+            const currentUser = AuthService.getCurrentUser();
+            if (currentUser) {
+                const email = currentUser.email || '-';
+                if (userEmailElement) userEmailElement.textContent = email;
+                if (userEmailElementZh) userEmailElementZh.textContent = email;
+            } else {
+                if (userEmailElement) userEmailElement.textContent = 'Not logged in';
+                if (userEmailElementZh) userEmailElementZh.textContent = '未登录';
+            }
+        }
+        
+        // 将订阅信息保存到Firestore
+        async function updateSubscriptionInFirestore(checkoutId, planType, userId) {
+            try {
+                // 初始化Firestore
+                const app = initializeFirebase();
+                if (!app) return;
+                
+                const db = firebase.firestore();
+                
+                // 获取当前用户
+                const user = AuthService.getCurrentUser();
+                const uid = userId || (user && user.uid);
+                
+                // 如果没有用户ID，不执行数据库写入
+                if (!uid) {
+                    console.warn('No user ID available, subscription data not saved to Firestore');
+                    return;
+                }
+                
+                // 创建订阅记录
+                const subscriptionData = {
+                    checkoutId: checkoutId,
+                    planType: planType || 'monthly',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'active',
+                    // 根据计划类型设置到期时间（模拟）
+                    expiresAt: new Date(Date.now() + (planType === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000)
+                };
+                
+                // 写入到用户文档
+                await db.collection('users').doc(uid).set({
+                    subscription: subscriptionData
+                }, { merge: true });
+                
+                console.log('Subscription data saved to Firestore for user:', uid);
+            } catch (error) {
+                console.error('Error saving subscription to Firestore:', error);
+            }
+        }
+        
         // 尝试与扩展通信，通知支付成功
-        function communicateWithExtension(checkoutId, planType) {
+        function communicateWithExtension(checkoutId, planType, userId) {
             try {
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
@@ -307,6 +389,7 @@
                     type: 'PAYMENT_SUCCESS',
                     checkoutId: checkoutId,
                     planType: planType || 'monthly',
+                    userId: userId, // 添加用户ID
                     timestamp: Date.now()
                 };
                 
