@@ -437,93 +437,116 @@ class AuthModal {
   
   // 更新UI
   updateUI(isLoggedIn, user = null) {
-    // 获取所有登录/注册按钮
-    const authButtons = document.querySelectorAll('.auth-button');
-    const userProfileElements = document.querySelectorAll('.user-profile');
+    const authButton = document.getElementById('login-button');
+    const userProfile = document.querySelector('.user-profile');
     
     if (isLoggedIn && user) {
-      // 用户已登录
-      authButtons.forEach(button => {
-        button.style.display = 'none';
-      });
-      
-      userProfileElements.forEach(element => {
-        element.style.display = 'flex';
+      // 隐藏登录按钮，显示用户资料
+      if (authButton) authButton.style.display = 'none';
+      if (userProfile) {
+        userProfile.style.display = 'flex';
         
-        // 更新用户信息
-        const nameElement = element.querySelector('.user-name');
-        if (nameElement) {
-          nameElement.textContent = user.displayName || '用户';
+        // 更新用户显示信息
+        const userAvatar = userProfile.querySelector('.user-avatar');
+        const userName = userProfile.querySelector('.user-name');
+        
+        if (userName) {
+          userName.textContent = user.displayName || user.email.split('@')[0];
         }
         
-        // 更新头像
-        const avatarElement = element.querySelector('.user-avatar');
-        if (avatarElement) {
+        if (userAvatar) {
           if (user.photoURL) {
-            avatarElement.style.backgroundImage = `url(${user.photoURL})`;
-            avatarElement.textContent = '';
+            userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'User'}">`;
           } else {
-            avatarElement.style.backgroundImage = '';
-            avatarElement.textContent = (user.displayName || '用户').charAt(0).toUpperCase();
+            userAvatar.textContent = (user.displayName || user.email)[0].toUpperCase();
           }
         }
         
-        // 创建或更新下拉菜单
-        let dropdownElement = element.querySelector('.user-dropdown');
-        if (!dropdownElement) {
-          dropdownElement = document.createElement('div');
-          dropdownElement.className = 'user-dropdown';
-          
-          // 下拉菜单内容
-          dropdownElement.innerHTML = `
-            <div class="user-info">
-              <p class="user-email">${user.email || ''}</p>
-            </div>
-            <div class="dropdown-divider"></div>
-            <a href="account.html" class="dropdown-item">账号设置</a>
-            <a href="subscription.html" class="dropdown-item">订阅管理</a>
-            <div class="dropdown-divider"></div>
-            <button class="dropdown-item logout-btn">退出登录</button>
-          `;
-          
-          // 添加登出事件监听
-          const logoutBtn = dropdownElement.querySelector('.logout-btn');
-          logoutBtn.addEventListener('click', async () => {
-            try {
-              await authService.logoutUser();
-              // 重定向到首页
-              if (window.location.pathname !== '/' && 
-                  window.location.pathname !== '/index.html') {
-                window.location.href = 'index.html';
-              }
-            } catch (error) {
-              console.error('登出失败:', error);
-              alert('登出失败，请重试');
-            }
-          });
-          
-          element.appendChild(dropdownElement);
-        } else {
-          // 更新已存在的下拉菜单
-          const emailElement = dropdownElement.querySelector('.user-email');
-          if (emailElement) {
-            emailElement.textContent = user.email || '';
-          }
-        }
-      });
+        // 创建下拉菜单（如果不存在）
+        this.createUserDropdown(userProfile, user);
+      }
     } else {
-      // 用户未登录
-      authButtons.forEach(button => {
-        button.style.display = 'block';
+      // 显示登录按钮，隐藏用户资料
+      if (authButton) authButton.style.display = 'block';
+      if (userProfile) userProfile.style.display = 'none';
+      
+      // 移除可能存在的下拉菜单
+      const existingDropdown = document.querySelector('.user-dropdown');
+      if (existingDropdown) {
+        existingDropdown.remove();
+      }
+    }
+  }
+  
+  // 创建用户下拉菜单
+  createUserDropdown(userProfile, user) {
+    // 检查是否已存在下拉菜单
+    let dropdown = document.querySelector('.user-dropdown');
+    
+    if (!dropdown) {
+      // 创建下拉菜单
+      dropdown = document.createElement('div');
+      dropdown.className = 'user-dropdown';
+      dropdown.style.display = 'none';
+      
+      // 添加下拉菜单内容
+      dropdown.innerHTML = `
+        <div class="user-info">
+          <p class="user-full-name">${user.displayName || user.email.split('@')[0]}</p>
+          <p class="user-email">${user.email}</p>
+        </div>
+        <div class="dropdown-divider"></div>
+        <a href="account.html" class="dropdown-item">
+          <span class="item-icon">⚙️</span>
+          <span class="item-text">账号设置</span>
+        </a>
+        <a href="subscription.html" class="dropdown-item">
+          <span class="item-icon">💳</span>
+          <span class="item-text">管理订阅</span>
+        </a>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item logout-btn">
+          <span class="item-icon">🚪</span>
+          <span class="item-text">退出登录</span>
+        </button>
+      `;
+      
+      // 添加到文档
+      document.body.appendChild(dropdown);
+      
+      // 绑定退出登录事件
+      const logoutBtn = dropdown.querySelector('.logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          try {
+            await authService.logoutUser();
+            console.log('用户已登出');
+          } catch (error) {
+            console.error('登出失败:', error);
+          }
+        });
+      }
+      
+      // 绑定用户头像点击事件
+      userProfile.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = dropdown.style.display === 'block';
+        
+        // 切换下拉菜单显示状态
+        dropdown.style.display = isVisible ? 'none' : 'block';
+        
+        // 计算下拉菜单位置
+        if (!isVisible) {
+          const rect = userProfile.getBoundingClientRect();
+          dropdown.style.top = rect.bottom + 'px';
+          dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+        }
       });
       
-      userProfileElements.forEach(element => {
-        element.style.display = 'none';
-        
-        // 移除下拉菜单
-        const dropdownElement = element.querySelector('.user-dropdown');
-        if (dropdownElement) {
-          element.removeChild(dropdownElement);
+      // 点击其他区域关闭下拉菜单
+      document.addEventListener('click', (e) => {
+        if (dropdown.style.display === 'block' && !userProfile.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.style.display = 'none';
         }
       });
     }

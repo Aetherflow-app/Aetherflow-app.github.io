@@ -312,40 +312,48 @@
     <script src="js/auth-modal.js"></script>
 
     <script>
-        // 初始化Firebase和Paddle
+        // 页面初始化
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
+            
             // 初始化Firebase
             initializeFirebase();
             
             // 创建认证模态窗口
-            const authModal = new AuthModal();
+            window.authModal = new AuthModal();
             
-            // 登录按钮点击事件
+            // 绑定登录按钮点击事件
             const loginButton = document.getElementById('login-button');
-            loginButton.addEventListener('click', function() {
-                authModal.open();
+            if (loginButton) {
+                loginButton.addEventListener('click', function() {
+                    window.authModal.open();
+                });
+            }
+            
+            // 监听认证状态变化
+            authService.onAuthStateChanged(function(user) {
+                console.log('认证状态变化:', user ? '已登录' : '未登录');
+                
+                // 处理结账意图
+                if (user) {
+                    handleCheckoutIntent(user);
+                }
             });
             
-            // 初始化Paddle
-            initializePaddle();
+            // 初始化支付处理
+            initializePaddleCheckout();
             
-            // 添加支付按钮点击事件
-            const checkoutButtons = document.querySelectorAll('.monthly-checkout, .annual-checkout');
-            checkoutButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                e.preventDefault();
+            // 初始化价格选项卡
+            document.querySelectorAll('.pricing-tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.pricing-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
                     
-                    // 检查用户是否已登录
-                    if (!authService.isAuthenticated()) {
-                        // 未登录，打开登录模态窗口
-                        alert('Please log in before upgrading');
-                        authModal.open();
-                        return;
+                    if (this.innerText.includes('Monthly')) {
+                        showMonthly();
+                    } else {
+                        showAnnual();
                     }
-                    
-                    // 已登录，启动支付流程
-                    const plan = this.dataset.plan;
-                    startCheckout(plan);
                 });
             });
         });
@@ -403,13 +411,13 @@
             
             Paddle.Setup(paddleOptions);
             console.log(`Paddle initialized in ${isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
-            }
-            
+        }
+        
         // 处理Paddle事件
         function handlePaddleEvent(eventData) {
-                    console.log('Paddle event:', eventData);
-                    
-                    if (eventData.name === 'checkout.completed') {
+            console.log('Paddle event:', eventData);
+            
+            if (eventData.name === 'checkout.completed') {
                 // 支付完成，重定向到成功页面
                 const user = firebase.auth().currentUser;
                 if (user) {
@@ -477,7 +485,191 @@
             
             // 启动Paddle Checkout
             Paddle.Checkout.open(checkoutOptions);
+        }
+
+        // 初始化支付处理
+        function initializePaddleCheckout() {
+            console.log('初始化 Paddle 结账');
+            
+            // 检查是否处于沙盒环境
+            const isSandbox = isInSandboxMode();
+            const environment = isSandbox ? 'sandbox' : 'production';
+            console.log(`当前环境: ${environment}`);
+            
+            // 环境标识
+            if (isSandbox) {
+                const envBadge = document.createElement('div');
+                envBadge.className = 'environment-badge sandbox';
+                envBadge.textContent = '沙盒测试';
+                document.body.appendChild(envBadge);
             }
+            
+            // 获取来源参数
+            const source = getSourceParam();
+            
+            // 设置 Paddle
+            Paddle.Environment.set(environment);
+            Paddle.Setup({
+                vendor: getPaddleVendorId()
+            });
+            
+            // 绑定月度订阅按钮点击事件
+            document.querySelectorAll('.monthly-checkout').forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    await handleCheckout('monthly', source);
+                });
+            });
+            
+            // 绑定年度订阅按钮点击事件
+            document.querySelectorAll('.annual-checkout').forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    await handleCheckout('annual', source);
+                });
+            });
+        }
+
+        // 处理结账请求
+        async function handleCheckout(planType, source = 'website') {
+            console.log(`开始${planType}计划结账流程，来源: ${source}`);
+            
+            try {
+                // 先检查用户是否已登录
+                const user = await authService.getCurrentUser();
+                
+                if (!user) {
+                    console.log('用户未登录，显示登录模态窗口');
+                    // 保存用户意图
+                    localStorage.setItem('checkout_intent', JSON.stringify({
+                        planType,
+                        source,
+                        timestamp: Date.now()
+                    }));
+                    
+                    // 显示登录模态窗口
+                    if (window.authModal) {
+                        window.authModal.open();
+                        
+                        // 显示提示信息
+                        const modalContent = document.querySelector('.auth-modal-content');
+                        if (modalContent) {
+                            const checkoutNotice = document.createElement('div');
+                            checkoutNotice.className = 'checkout-notice';
+                            checkoutNotice.innerHTML = '请先登录再继续订阅流程';
+                            modalContent.insertBefore(checkoutNotice, modalContent.firstChild);
+                        }
+                    } else {
+                        alert('请先登录后再进行订阅');
+                    }
+                    
+                    return;
+                }
+                
+                // 用户已登录，继续结账流程
+                console.log('用户已登录，继续结账流程');
+                
+                // 显示加载状态
+                showLoading();
+                
+                // 获取产品ID
+                const productId = getProductId(planType);
+                if (!productId) {
+                    hideLoading();
+                    console.error('无法获取产品ID');
+                    alert('订阅初始化失败，请稍后再试');
+                    return;
+                }
+                
+                // 设置结账参数
+                const checkoutParams = {
+                    items: [{
+                        priceId: productId,
+                        quantity: 1
+                    }],
+                    customer: {
+                        email: user.email,
+                        userId: user.uid
+                    },
+                    successUrl: window.location.origin + '/success.html?checkoutId={checkout.id}',
+                    cancelUrl: window.location.origin + '/cancel.html'
+                };
+                
+                // 添加UTM参数
+                if (source && source !== 'website') {
+                    checkoutParams.utm = {
+                        source: source,
+                        medium: 'extension',
+                        campaign: 'upgrade'
+                    };
+                }
+                
+                console.log('结账参数:', checkoutParams);
+                
+                // 打开Paddle结账
+                const checkout = await Paddle.Checkout.open(checkoutParams);
+                console.log('结账成功打开:', checkout);
+                
+                // 隐藏加载状态
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('结账过程中出错:', error);
+                alert('启动结账失败: ' + (error.message || '未知错误'));
+            }
+        }
+
+        // 监听认证状态变化，处理结账意图
+        function handleCheckoutIntent(user) {
+            if (!user) return;
+            
+            // 检查是否有未完成的结账意图
+            const intentJson = localStorage.getItem('checkout_intent');
+            if (!intentJson) return;
+            
+            try {
+                const intent = JSON.parse(intentJson);
+                
+                // 验证意图是否有效（30分钟内）
+                const now = Date.now();
+                const intentTime = intent.timestamp || 0;
+                const isValid = now - intentTime < 30 * 60 * 1000; // 30分钟
+                
+                if (isValid && intent.planType) {
+                    console.log('发现有效的结账意图:', intent);
+                    
+                    // 清除意图
+                    localStorage.removeItem('checkout_intent');
+                    
+                    // 等待一小段时间后继续结账流程
+                    setTimeout(() => {
+                        handleCheckout(intent.planType, intent.source || 'website');
+                    }, 1000);
+                } else {
+                    // 清除过期意图
+                    localStorage.removeItem('checkout_intent');
+                }
+            } catch (error) {
+                console.error('处理结账意图时出错:', error);
+                localStorage.removeItem('checkout_intent');
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            const loadingElement = document.createElement('div');
+            loadingElement.className = 'loading-overlay';
+            loadingElement.innerHTML = '<div class="loading-spinner"></div>';
+            document.body.appendChild(loadingElement);
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            const loadingElement = document.querySelector('.loading-overlay');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
     </script>
 </body>
 </html> 

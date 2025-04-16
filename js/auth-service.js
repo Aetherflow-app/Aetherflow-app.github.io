@@ -1,5 +1,14 @@
 // 认证服务
 const authService = {
+  // 初始化认证服务，设置持久化
+  init() {
+    // 设置认证持久化级别为LOCAL，确保跨域共享
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .catch(error => {
+        console.error('认证持久化设置失败:', error);
+      });
+  },
+
   // 获取当前用户
   getCurrentUser() {
     return new Promise((resolve, reject) => {

@@ -13,9 +13,13 @@ const firebaseConfig = {
 function initializeFirebase() {
   if (firebase.apps.length === 0) {
     firebase.initializeApp(firebaseConfig);
-    // 设置认证持久化，使官网和扩展共享状态
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     console.log('Firebase 初始化成功');
+    
+    // 初始化认证服务配置
+    if (typeof authService !== 'undefined' && authService.init) {
+      authService.init();
+      console.log('认证服务初始化成功');
+    }
   } else {
     console.log('Firebase 已初始化');
   }
