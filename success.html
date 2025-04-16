@@ -8,12 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 引入Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-    <!-- 引入认证模块 -->
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/auth-ui.js"></script>
+    <script src="assets/js/auth-service.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -89,33 +84,6 @@
             font-size: 14px;
             color: #666;
         }
-
-        .user-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e9f5ff;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: #ddd;
-            overflow: hidden;
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
     </style>
 </head>
 <body>
@@ -133,9 +101,6 @@
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
-                <div class="auth-buttons-container">
-                    <!-- 认证按钮将在这里动态生成 -->
-                </div>
             </nav>
         </div>
     </header>
@@ -155,11 +120,6 @@
                 <p class="success-message zh" style="display:none;">
                     感谢您升级到AetherFlow专业版！您的账户已成功升级，现在您可以使用所有高级功能。
                 </p>
-                
-                <div class="user-info">
-                    <div class="user-avatar" id="user-avatar"></div>
-                    <span id="user-email">正在加载用户信息...</span>
-                </div>
                 
                 <div class="next-steps">
                     <h3 class="en">Next Steps:</h3>
@@ -259,41 +219,30 @@
             }
         }
         
-        // 更新用户信息
-        function updateUserInfo(user) {
-            const userAvatar = document.getElementById('user-avatar');
-            const userEmail = document.getElementById('user-email');
-            
-            if (user) {
-                // 显示用户头像
-                if (user.photoURL) {
-                    userAvatar.innerHTML = `<img src="${user.photoURL}" alt="User Avatar">`;
-                }
-                
-                // 显示用户邮箱
-                userEmail.textContent = user.email || user.displayName || '已登录用户';
-            } else {
-                userEmail.textContent = '未登录用户';
-                userAvatar.innerHTML = '';
-            }
-        }
-        
         // 处理支付成功数据
-        document.addEventListener('DOMContentLoaded', async function() {
-            // 初始化认证UI
-            window.AetherFlowAuthUI.initAuthUI();
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化认证服务
+            if (window.authService) {
+                window.authService.initialize().then(() => {
+                    // 认证服务初始化完成后处理支付成功
+                    processPaymentSuccess();
+                });
+            } else {
+                // 如果认证服务不可用，仍然处理支付成功
+                processPaymentSuccess();
+            }
             
             // 应用保存的语言偏好
             applyLanguagePreference();
-            
-            // 获取当前用户
-            const user = await window.AetherFlowAuth.getCurrentUser();
-            updateUserInfo(user);
-            
+        });
+        
+        // 处理支付成功逻辑
+        function processPaymentSuccess() {
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
+            const userId = urlParams.get('uid');
             const envParam = urlParams.get('env');
             
             // 判断环境
@@ -324,8 +273,8 @@
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
+                console.log('User ID:', userId);
                 console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
-                console.log('User ID:', user ? user.uid : 'Not logged in');
                 
                 // 更新交易ID显示
                 const transactionElements = [
@@ -351,43 +300,85 @@
                     if (planElementZh) planElementZh.textContent = '月度';
                 }
                 
-                // 准备发送给扩展的数据，包含用户ID
-                const messageData = {
-                    type: 'PAYMENT_SUCCESS',
+                // 准备支付成功数据
+                const paymentData = {
                     checkoutId: checkoutId,
                     planType: planType || 'monthly',
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    userId: userId || localStorage.getItem('aetherflow_checkout_user') || null
                 };
                 
-                // 如果用户已登录，添加用户ID
-                if (user) {
-                    messageData.userId = user.uid;
-                    messageData.userEmail = user.email;
-                }
+                // 保存支付数据
+                savePaymentData(paymentData);
                 
                 // 尝试与扩展通信，更新会员状态
-                communicateWithExtension(messageData);
+                communicateWithExtension(paymentData);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
                 localStorage.setItem('aetherflow_checkout_id', checkoutId);
                 localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
                 
-                // 如果用户已登录，保存用户ID
-                if (user) {
-                    localStorage.setItem('aetherflow_payment_user_id', user.uid);
+                // 如果有用户ID，确保在localStorage中保存
+                if (userId) {
+                    localStorage.setItem('aetherflow_checkout_user', userId);
                 }
             }
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
             updateExtensionButtons();
-        });
+        }
+        
+        // 将支付数据保存到Firebase（如果用户已登录）
+        function savePaymentData(paymentData) {
+            // 检查认证服务和登录状态
+            if (!window.authService || !window.authService.isAuthenticated()) {
+                console.log('认证服务不可用或用户未登录，无法保存支付数据到Firebase');
+                return;
+            }
+            
+            // 从认证服务获取当前用户
+            const user = window.authService.getCurrentUser();
+            
+            // 如果有有效的用户ID（URL参数或localStorage），但与当前登录用户不同
+            if (paymentData.userId && user && paymentData.userId !== user.uid) {
+                console.log('警告：支付关联的用户ID与当前登录用户不匹配');
+                
+                // 仍使用当前登录用户
+                paymentData.userId = user.uid;
+            }
+            
+            // 如果没有用户ID但有登录用户，使用登录用户ID
+            if (!paymentData.userId && user) {
+                paymentData.userId = user.uid;
+            }
+            
+            // 如果有有效的用户ID，保存到localStorage
+            if (paymentData.userId) {
+                localStorage.setItem('aetherflow_checkout_user', paymentData.userId);
+            }
+            
+            console.log('准备与支付数据一起使用的用户ID:', paymentData.userId);
+            
+            // 这里可以添加实际的Firebase数据存储逻辑
+            // 例如：将支付数据存储到Firestore
+            // 注意：此功能需要在后续扩展实现
+        }
         
         // 尝试与扩展通信，通知支付成功
-        function communicateWithExtension(messageData) {
+        function communicateWithExtension(paymentData) {
             try {
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+                
+                // 准备消息数据
+                const messageData = {
+                    type: 'PAYMENT_SUCCESS',
+                    checkoutId: paymentData.checkoutId,
+                    planType: paymentData.planType,
+                    userId: paymentData.userId,
+                    timestamp: paymentData.timestamp
+                };
                 
                 console.log('Attempting to communicate with extension:', messageData);
                 
