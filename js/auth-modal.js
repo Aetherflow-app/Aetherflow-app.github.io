@@ -211,6 +211,34 @@ class AuthModal {
     this.modalElement.style.display = 'none';
     document.body.classList.remove('auth-modal-open');
     this.isOpen = false;
+    
+    // 检查是否有待处理的升级请求
+    this.checkPendingUpgrade();
+  }
+  
+  // 检查并处理待处理的升级请求
+  checkPendingUpgrade() {
+    // 检查用户是否已登录
+    if (!authService.isAuthenticated()) return;
+    
+    // 检查是否有待处理的升级请求
+    const pendingPlan = sessionStorage.getItem('pendingUpgradePlan');
+    if (pendingPlan) {
+      console.log('处理待处理的升级请求:', pendingPlan);
+      
+      // 清除存储的计划类型
+      sessionStorage.removeItem('pendingUpgradePlan');
+      
+      // 延迟一下，确保UI和认证状态已更新
+      setTimeout(() => {
+        // 启动支付流程
+        if (typeof startCheckout === 'function') {
+          startCheckout(pendingPlan);
+        } else {
+          console.error('startCheckout 函数不可用');
+        }
+      }, 500);
+    }
   }
   
   // 重置所有表单
@@ -341,9 +369,15 @@ class AuthModal {
     }
     
     try {
-      await authService.loginUser(email, password);
-      this.setLoading(false);
-      // 登录成功后，onAuthStateChanged会处理关闭模态窗口
+      const user = await authService.loginUser(email, password);
+      console.log('登录成功:', user);
+      
+      this.resetForms();
+      this.setError(null);
+      this.close();
+      
+      // 检查并处理待处理的升级请求
+      this.checkPendingUpgrade();
     } catch (error) {
       this.setError(error.message);
       this.setLoading(false);
@@ -385,9 +419,15 @@ class AuthModal {
     }
     
     try {
-      await authService.registerUser(email, password, displayName);
-      this.setLoading(false);
-      // 注册成功后，onAuthStateChanged会处理关闭模态窗口
+      const user = await authService.registerUser(email, password, displayName);
+      console.log('注册成功:', user);
+      
+      this.resetForms();
+      this.setError(null);
+      this.close();
+      
+      // 检查并处理待处理的升级请求
+      this.checkPendingUpgrade();
     } catch (error) {
       this.setError(error.message);
       this.setLoading(false);
@@ -426,9 +466,15 @@ class AuthModal {
     this.setLoading(true);
     
     try {
-      await authService.loginWithGoogle();
-      this.setLoading(false);
-      // 登录成功后，onAuthStateChanged会处理关闭模态窗口
+      const user = await authService.loginWithGoogle();
+      console.log('Google登录成功:', user);
+      
+      this.resetForms();
+      this.setError(null);
+      this.close();
+      
+      // 检查并处理待处理的升级请求
+      this.checkPendingUpgrade();
     } catch (error) {
       this.setError(error.message);
       this.setLoading(false);
@@ -437,117 +483,45 @@ class AuthModal {
   
   // 更新UI
   updateUI(isLoggedIn, user = null) {
-    const authButton = document.getElementById('login-button');
-    const userProfile = document.querySelector('.user-profile');
+    // 获取所有登录/注册按钮
+    const authButtons = document.querySelectorAll('.auth-button');
+    const userProfileElements = document.querySelectorAll('.user-profile');
     
     if (isLoggedIn && user) {
-      // 隐藏登录按钮，显示用户资料
-      if (authButton) authButton.style.display = 'none';
-      if (userProfile) {
-        userProfile.style.display = 'flex';
-        
-        // 更新用户显示信息
-        const userAvatar = userProfile.querySelector('.user-avatar');
-        const userName = userProfile.querySelector('.user-name');
-        
-        if (userName) {
-          userName.textContent = user.displayName || user.email.split('@')[0];
-        }
-        
-        if (userAvatar) {
-          if (user.photoURL) {
-            userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'User'}">`;
-          } else {
-            userAvatar.textContent = (user.displayName || user.email)[0].toUpperCase();
-          }
-        }
-        
-        // 创建下拉菜单（如果不存在）
-        this.createUserDropdown(userProfile, user);
-      }
-    } else {
-      // 显示登录按钮，隐藏用户资料
-      if (authButton) authButton.style.display = 'block';
-      if (userProfile) userProfile.style.display = 'none';
-      
-      // 移除可能存在的下拉菜单
-      const existingDropdown = document.querySelector('.user-dropdown');
-      if (existingDropdown) {
-        existingDropdown.remove();
-      }
-    }
-  }
-  
-  // 创建用户下拉菜单
-  createUserDropdown(userProfile, user) {
-    // 检查是否已存在下拉菜单
-    let dropdown = document.querySelector('.user-dropdown');
-    
-    if (!dropdown) {
-      // 创建下拉菜单
-      dropdown = document.createElement('div');
-      dropdown.className = 'user-dropdown';
-      dropdown.style.display = 'none';
-      
-      // 添加下拉菜单内容
-      dropdown.innerHTML = `
-        <div class="user-info">
-          <p class="user-full-name">${user.displayName || user.email.split('@')[0]}</p>
-          <p class="user-email">${user.email}</p>
-        </div>
-        <div class="dropdown-divider"></div>
-        <a href="account.html" class="dropdown-item">
-          <span class="item-icon">⚙️</span>
-          <span class="item-text">账号设置</span>
-        </a>
-        <a href="subscription.html" class="dropdown-item">
-          <span class="item-icon">💳</span>
-          <span class="item-text">管理订阅</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <button class="dropdown-item logout-btn">
-          <span class="item-icon">🚪</span>
-          <span class="item-text">退出登录</span>
-        </button>
-      `;
-      
-      // 添加到文档
-      document.body.appendChild(dropdown);
-      
-      // 绑定退出登录事件
-      const logoutBtn = dropdown.querySelector('.logout-btn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await authService.logoutUser();
-            console.log('用户已登出');
-          } catch (error) {
-            console.error('登出失败:', error);
-          }
-        });
-      }
-      
-      // 绑定用户头像点击事件
-      userProfile.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = dropdown.style.display === 'block';
-        
-        // 切换下拉菜单显示状态
-        dropdown.style.display = isVisible ? 'none' : 'block';
-        
-        // 计算下拉菜单位置
-        if (!isVisible) {
-          const rect = userProfile.getBoundingClientRect();
-          dropdown.style.top = rect.bottom + 'px';
-          dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-        }
+      // 用户已登录
+      authButtons.forEach(button => {
+        button.style.display = 'none';
       });
       
-      // 点击其他区域关闭下拉菜单
-      document.addEventListener('click', (e) => {
-        if (dropdown.style.display === 'block' && !userProfile.contains(e.target) && !dropdown.contains(e.target)) {
-          dropdown.style.display = 'none';
+      userProfileElements.forEach(element => {
+        element.style.display = 'flex';
+        
+        // 更新用户信息
+        const nameElement = element.querySelector('.user-name');
+        if (nameElement) {
+          nameElement.textContent = user.displayName || '用户';
         }
+        
+        // 更新头像
+        const avatarElement = element.querySelector('.user-avatar');
+        if (avatarElement) {
+          if (user.photoURL) {
+            avatarElement.style.backgroundImage = `url(${user.photoURL})`;
+            avatarElement.textContent = '';
+          } else {
+            avatarElement.style.backgroundImage = '';
+            avatarElement.textContent = (user.displayName || '用户').charAt(0).toUpperCase();
+          }
+        }
+      });
+    } else {
+      // 用户未登录
+      authButtons.forEach(button => {
+        button.style.display = 'block';
+      });
+      
+      userProfileElements.forEach(element => {
+        element.style.display = 'none';
       });
     }
   }

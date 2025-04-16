@@ -14,12 +14,6 @@ function initializeFirebase() {
   if (firebase.apps.length === 0) {
     firebase.initializeApp(firebaseConfig);
     console.log('Firebase 初始化成功');
-    
-    // 初始化认证服务配置
-    if (typeof authService !== 'undefined' && authService.init) {
-      authService.init();
-      console.log('认证服务初始化成功');
-    }
   } else {
     console.log('Firebase 已初始化');
   }

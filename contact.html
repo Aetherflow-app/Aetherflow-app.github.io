@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - AetherFlow</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/auth-modal.css">
+    <link rel="stylesheet" href="css/user-dropdown.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -170,6 +172,16 @@
                     <li><a href="contact.html" class="active">Contact</a></li>
                 </ul>
             </nav>
+            <div class="header-actions">
+                <!-- 登录/注册按钮 -->
+                <button class="auth-button" id="login-button">Login / Register</button>
+                
+                <!-- 用户个人资料 (默认隐藏) -->
+                <div class="user-profile" style="display: none;">
+                    <div class="user-avatar">U</div>
+                    <span class="user-name">User</span>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -284,11 +296,36 @@
         </div>
     </footer>
 
+    <!-- 加载Firebase和认证服务 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    <script src="js/auth-modal.js"></script>
+    <script src="js/user-dropdown.js"></script>
+    <script src="js/extension-sync.js"></script>
+
     <script>
         document.getElementById('contactForm').addEventListener('submit', function(event) {
             // 表单处理逻辑
             // 这里使用了Formspree服务来处理表单提交
             // 如果你想自行处理，可以替换这部分代码
+        });
+
+        // 初始化Firebase
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFirebase();
+            
+            // 创建认证模态窗口
+            const authModal = new AuthModal();
+            
+            // 登录按钮点击事件
+            const loginButton = document.getElementById('login-button');
+            if (loginButton) {
+                loginButton.addEventListener('click', function() {
+                    authModal.open();
+                });
+            }
         });
     </script>
 </body>

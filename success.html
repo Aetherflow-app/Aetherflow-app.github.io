@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - AetherFlow</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="css/auth-modal.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -105,16 +101,6 @@
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
             </nav>
-            <div class="header-actions">
-                <!-- 登录/注册按钮 -->
-                <button class="auth-button" id="login-button">Login / Register</button>
-                
-                <!-- 用户个人资料 (默认隐藏) -->
-                <div class="user-profile" style="display: none;">
-                    <div class="user-avatar">U</div>
-                    <span class="user-name">User</span>
-                </div>
-            </div>
         </div>
     </header>
 
@@ -160,8 +146,6 @@
                     <p class="zh" style="display:none;">交易ID：<span id="transaction-id-zh">处理中...</span></p>
                     <p class="en">Plan: <span id="plan-type">Monthly</span></p>
                     <p class="zh" style="display:none;">方案：<span id="plan-type-zh">月度</span></p>
-                    <p class="en">User ID: <span id="user-id">Checking...</span></p>
-                    <p class="zh" style="display:none;">用户ID：<span id="user-id-zh">检查中...</span></p>
                 </div>
                 
                 <div class="cta-buttons">
@@ -207,11 +191,6 @@
         </div>
     </footer>
 
-    <!-- 加载Firebase配置和认证服务 -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth-service.js"></script>
-    <script src="js/auth-modal.js"></script>
-
     <script>
         // 切换语言
         function toggleLanguage() {
@@ -239,71 +218,138 @@
             }
         }
         
-        // 初始化页面
+        // 处理支付成功数据
         document.addEventListener('DOMContentLoaded', function() {
             // 应用保存的语言偏好
             applyLanguagePreference();
             
-            // 初始化Firebase
-            initializeFirebase();
+            // 解析URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const checkoutId = urlParams.get('checkout');
+            const planType = urlParams.get('plan');
+            const envParam = urlParams.get('env');
             
-            // 创建认证模态窗口
-            const authModal = new AuthModal();
+            // 判断环境
+            const isSandbox = envParam === 'sandbox' || 
+                            envParam === 'test' || 
+                            localStorage.getItem('aetherflow_env') === 'sandbox';
             
-            // 登录按钮点击事件
-            const loginButton = document.getElementById('login-button');
-            if (loginButton) {
-                loginButton.addEventListener('click', function() {
-                    authModal.open();
-                });
+            // 如果是沙盒环境，显示相应标识
+            if (isSandbox) {
+                const envIndicator = document.createElement('div');
+                envIndicator.style.position = 'fixed';
+                envIndicator.style.bottom = '10px';
+                envIndicator.style.left = '10px';
+                envIndicator.style.padding = '5px 10px';
+                envIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                envIndicator.style.color = '#900';
+                envIndicator.style.borderRadius = '4px';
+                envIndicator.style.fontSize = '12px';
+                envIndicator.style.zIndex = '9999';
+                envIndicator.textContent = 'SANDBOX PAYMENT';
+                document.body.appendChild(envIndicator);
+                
+                // 记录环境
+                localStorage.setItem('aetherflow_env', 'sandbox');
             }
             
-            // 获取URL参数
-            const urlParams = new URLSearchParams(window.location.search);
-            const checkoutId = urlParams.get('checkout') || 'N/A';
-            const planType = urlParams.get('plan') || 'monthly';
-            const uid = urlParams.get('uid') || null;
+            // 如果有结账参数，使用它们进行验证
+            if (checkoutId) {
+                console.log('Checkout ID:', checkoutId);
+                console.log('Plan Type:', planType);
+                console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
                 
-            // 更新交易信息
-            document.getElementById('transaction-id').textContent = checkoutId;
-            document.getElementById('transaction-id-zh').textContent = checkoutId;
-            
-            document.getElementById('plan-type').textContent = planType === 'annual' ? 'Annual' : 'Monthly';
-            document.getElementById('plan-type-zh').textContent = planType === 'annual' ? '年度' : '月度';
-            
-            // 检查用户登录状态
-            firebase.auth().onAuthStateChanged(function(user) {
-                if (user) {
-                    // 用户已登录
-                    document.getElementById('user-id').textContent = user.uid;
-                    document.getElementById('user-id-zh').textContent = user.uid;
-        
-                    // 通知扩展支付成功
-            try {
-                        chrome.runtime.sendMessage('ldpadjcdbfndeghcklogoppmbnmphbki', {
-                    type: 'PAYMENT_SUCCESS',
-                            data: {
-                                userId: user.uid,
-                    checkoutId: checkoutId,
-                                planType: planType
-                            }
-                        }, function(response) {
-                            console.log('Extension notified:', response);
-                        });
-                    } catch (error) {
-                        console.warn('Could not communicate with extension:', error);
+                // 更新交易ID显示
+                const transactionElements = [
+                    document.getElementById('transaction-id'),
+                    document.getElementById('transaction-id-zh')
+                ];
+                
+                transactionElements.forEach(element => {
+                    if (element) {
+                        element.textContent = checkoutId;
                     }
-                } else if (uid) {
-                    // 用户未登录但URL中有uid
-                    document.getElementById('user-id').textContent = uid;
-                    document.getElementById('user-id-zh').textContent = uid;
+                });
+                
+                // 更新计划类型显示
+                const planElement = document.getElementById('plan-type');
+                const planElementZh = document.getElementById('plan-type-zh');
+                
+                if (planType === 'annual') {
+                    if (planElement) planElement.textContent = 'Annual';
+                    if (planElementZh) planElementZh.textContent = '年度';
                 } else {
-                    // 用户未登录且URL中无uid
-                    document.getElementById('user-id').textContent = 'Not logged in';
-                    document.getElementById('user-id-zh').textContent = '未登录';
+                    if (planElement) planElement.textContent = 'Monthly';
+                    if (planElementZh) planElementZh.textContent = '月度';
+                }
+                
+                // 尝试与扩展通信，更新会员状态
+                communicateWithExtension(checkoutId, planType);
+                
+                // 保存到localStorage作为备份
+                localStorage.setItem('aetherflow_payment_success', 'true');
+                localStorage.setItem('aetherflow_checkout_id', checkoutId);
+                localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
+            }
+            
+            // 更新打开AetherFlow按钮，使用当前的扩展ID
+            updateExtensionButtons();
+        });
+        
+        // 尝试与扩展通信，通知支付成功
+        function communicateWithExtension(checkoutId, planType) {
+            try {
+                // 使用Chrome扩展消息机制
+                const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+                
+                // 准备消息数据
+                const messageData = {
+                    type: 'PAYMENT_SUCCESS',
+                    checkoutId: checkoutId,
+                    planType: planType || 'monthly',
+                    timestamp: Date.now()
+                };
+                
+                console.log('Attempting to communicate with extension:', messageData);
+                
+                // 尝试发送消息到扩展
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    chrome.runtime.sendMessage(extensionId, messageData, function(response) {
+                        if (chrome.runtime.lastError) {
+                            console.log('Failed to communicate with extension:', chrome.runtime.lastError);
+                        } else {
+                            console.log('Successfully communicated with extension:', response);
                         }
                     });
+                } else {
+                    console.log('Chrome API not available. Data saved to localStorage for later retrieval.');
+                }
+            } catch (error) {
+                console.error('Error communicating with extension:', error);
+            }
+        }
+        
+        // 更新扩展按钮的URL
+        function updateExtensionButtons() {
+            const extensionButtons = [
+                document.getElementById('open-extension-btn'),
+                document.getElementById('open-extension-btn-zh')
+            ];
+            
+            extensionButtons.forEach(button => {
+                if (button) {
+                    // 为按钮添加点击事件处理
+                    button.addEventListener('click', function(e) {
+                        // 如果按钮URL不是扩展URL，阻止默认行为
+                        if (!button.href.includes('chrome-extension://')) {
+                            e.preventDefault();
+                            // 在新标签打开Chrome商店页面
+                            window.open('https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki', '_blank');
+                        }
+                    });
+                }
             });
+        }
     </script>
 </body>
 </html> 
