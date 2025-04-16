@@ -349,6 +349,7 @@
                 userProfile.addEventListener('click', function(e) {
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     dropdown.classList.toggle('active');
+                    userProfile.classList.toggle('dropdown-active');
                     e.stopPropagation();
                 });
                 
@@ -357,6 +358,7 @@
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     if (dropdown.classList.contains('active')) {
                         dropdown.classList.remove('active');
+                        userProfile.classList.remove('dropdown-active');
                     }
                 });
             }

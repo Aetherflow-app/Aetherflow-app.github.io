@@ -318,9 +318,9 @@
                 e.preventDefault();
                 try {
                     await authService.logoutUser();
-                    console.log('用户已登出');
+                    console.log('User logged out successfully');
                 } catch (error) {
-                    console.error('登出失败:', error);
+                    console.error('Logout failed:', error);
                 }
             });
             
@@ -330,6 +330,7 @@
                 userProfile.addEventListener('click', function(e) {
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     dropdown.classList.toggle('active');
+                    userProfile.classList.toggle('dropdown-active');
                     e.stopPropagation();
                 });
                 
@@ -338,6 +339,7 @@
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     if (dropdown.classList.contains('active')) {
                         dropdown.classList.remove('active');
+                        userProfile.classList.remove('dropdown-active');
                     }
                 });
             }
