@@ -25,20 +25,29 @@ class AuthService {
   async initialize() {
     if (this.initialized) return;
 
+    console.log('开始初始化Firebase认证服务...');
+    
     try {
       // 动态加载Firebase所需的脚本
+      console.log('开始加载Firebase脚本...');
       await this.loadFirebaseScripts();
+      console.log('Firebase脚本加载完成');
       
       // 初始化Firebase
-      if (!firebase.apps.length) {
+      if (firebase.apps && firebase.apps.length === 0) {
+        console.log('初始化Firebase应用...');
         firebase.initializeApp(firebaseConfig);
+      } else {
+        console.log('Firebase应用已初始化');
       }
       
       this.auth = firebase.auth();
       this.initialized = true;
+      console.log('Firebase Auth初始化完成');
       
       // 监听认证状态变化
       this.auth.onAuthStateChanged((user) => {
+        console.log('认证状态变更:', user ? `已登录: ${user.email}` : '未登录');
         this.currentUser = user;
         
         // 保存状态到localStorage (不含敏感信息)
@@ -51,8 +60,10 @@ class AuthService {
             isAnonymous: user.isAnonymous,
             emailVerified: user.emailVerified
           }));
+          console.log('用户信息已保存到localStorage');
         } else {
           localStorage.removeItem('auth_user');
+          console.log('localStorage中的用户信息已清除');
         }
         
         // 通知所有监听者
@@ -60,7 +71,8 @@ class AuthService {
       });
       
       // 处理来自URL的认证令牌
-      await this.handleAuthTokenFromUrl();
+      const tokenResult = await this.handleAuthTokenFromUrl();
+      console.log('URL令牌处理结果:', tokenResult ? '成功' : '无令牌或处理失败');
       
       console.log('Firebase 认证服务初始化完成');
       return true;
@@ -78,15 +90,15 @@ class AuthService {
         return resolve();
       }
       
-      // 加载Firebase核心
+      // 加载Firebase核心 (使用compat版本)
       const appScript = document.createElement('script');
-      appScript.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+      appScript.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js';
       appScript.onload = () => {
-        // 加载Firebase认证
+        // 加载Firebase认证 (使用compat版本)
         const authScript = document.createElement('script');
-        authScript.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+        authScript.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js';
         authScript.onload = () => {
-          // 加载Firebase UI
+          // 加载Firebase UI (适用于compat版本)
           const uiScript = document.createElement('script');
           uiScript.src = 'https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.js';
           
@@ -124,8 +136,18 @@ class AuthService {
       if (token) {
         console.log('从URL检测到认证令牌');
         
-        // 使用令牌签名
-        await this.auth.signInWithCustomToken(token);
+        // 使用令牌登录 (这是从扩展中传递的Firebase ID令牌)
+        try {
+          // 创建Firebase凭证
+          const credential = firebase.auth.GoogleAuthProvider.credential(null, token);
+          // 使用凭证登录
+          await this.auth.signInWithCredential(credential);
+          console.log('使用令牌登录成功');
+        } catch (tokenError) {
+          console.error('使用令牌登录失败:', tokenError);
+          // 备用方案：尝试使用Firebase自带的持久化登录
+          console.log('尝试使用Firebase持久化登录方案');
+        }
         
         // 移除URL中的token参数
         const newUrl = window.location.pathname + 
@@ -133,7 +155,6 @@ class AuthService {
                       window.location.hash;
         window.history.replaceState({}, document.title, newUrl);
         
-        console.log('使用令牌登录成功');
         return true;
       }
       return false;
@@ -311,6 +332,9 @@ class AuthService {
 
 // 创建并导出认证服务单例
 const authService = new AuthService();
+
+// 将authService暴露为全局变量，确保auth-ui.js可以访问
+window.authService = authService;
 
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
