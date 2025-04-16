@@ -37,18 +37,6 @@
                 <div class="user-profile" style="display: none;">
                     <div class="user-avatar">U</div>
                     <span class="user-name">User</span>
-                    <div class="user-dropdown">
-                        <ul>
-                            <li><a href="#" id="logout-button" class="logout-link">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
-                                <span style="margin-left: 8px;">Logout</span>
-                            </a></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
@@ -185,7 +173,7 @@
                     <div class="most-popular">Most Popular</div>
                     <div class="card-header">
                         <h3>Pro</h3>
-                        <div class="price">$3.99</div>
+                        <div class="price">$4.99</div>
                         <p>per month</p>
                     </div>
                     <div class="card-features">
@@ -285,12 +273,12 @@
                     </div>
                     <div class="footer-links-section">
                         <h3>Legal</h3>
-                        <ul>
-                            <li><a href="terms-of-service.html">Terms of Service</a></li>
-                            <li><a href="privacy-policy.html">Privacy Policy</a></li>
-                            <li><a href="refund-policy.html">Refund Policy</a></li>
-                        </ul>
-                    </div>
+                    <ul>
+                        <li><a href="terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="refund-policy.html">Refund Policy</a></li>
+                    </ul>
+                </div>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -303,7 +291,7 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-service.js"></script>
     <script src="js/auth-modal.js"></script>
-    
+
     <script>
         // 初始化Firebase
         document.addEventListener('DOMContentLoaded', function() {
@@ -318,53 +306,6 @@
             loginButton.addEventListener('click', function() {
                 authModal.open();
             });
-            
-            // 添加用户头像点击事件，显示/隐藏下拉菜单
-            const userProfile = document.querySelector('.user-profile');
-            if (userProfile) {
-                // 点击头像或用户名时切换下拉菜单
-                userProfile.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const dropdown = userProfile.querySelector('.user-dropdown');
-                    // 切换下拉菜单显示状态
-                    if (dropdown.classList.contains('active')) {
-                        dropdown.classList.remove('active');
-                    } else {
-                        dropdown.classList.add('active');
-                    }
-                });
-                
-                // 点击其他区域关闭下拉菜单
-                document.addEventListener('click', function() {
-                    const dropdown = userProfile.querySelector('.user-dropdown');
-                    if (dropdown.classList.contains('active')) {
-                        dropdown.classList.remove('active');
-                    }
-                });
-                
-                // 防止点击下拉菜单本身时关闭
-                const dropdown = userProfile.querySelector('.user-dropdown');
-                dropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
-            
-            // 登出按钮点击事件
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', async function(e) {
-                    e.preventDefault();
-                    // 添加确认询问
-                    if (confirm('Are you sure you want to logout?')) {
-                        try {
-                            await authService.logoutUser();
-                            console.log('用户已登出');
-                        } catch (error) {
-                            console.error('登出失败:', error);
-                        }
-                    }
-                });
-            }
         });
     </script>
 </body>

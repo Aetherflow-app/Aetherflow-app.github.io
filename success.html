@@ -113,18 +113,6 @@
                 <div class="user-profile" style="display: none;">
                     <div class="user-avatar">U</div>
                     <span class="user-name">User</span>
-                    <div class="user-dropdown">
-                        <ul>
-                            <li><a href="#" id="logout-button" class="logout-link">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
-                                <span style="margin-left: 8px;">Logout</span>
-                            </a></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
@@ -270,61 +258,12 @@
                 });
             }
             
-            // 添加用户头像点击事件，显示/隐藏下拉菜单
-            const userProfile = document.querySelector('.user-profile');
-            if (userProfile) {
-                // 点击头像或用户名时切换下拉菜单
-                userProfile.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const dropdown = userProfile.querySelector('.user-dropdown');
-                    // 切换下拉菜单显示状态
-                    if (dropdown.classList.contains('active')) {
-                        dropdown.classList.remove('active');
-                    } else {
-                        dropdown.classList.add('active');
-                    }
-                });
-                
-                // 点击其他区域关闭下拉菜单
-                document.addEventListener('click', function() {
-                    const dropdown = userProfile.querySelector('.user-dropdown');
-                    if (dropdown && dropdown.classList.contains('active')) {
-                        dropdown.classList.remove('active');
-                    }
-                });
-                
-                // 防止点击下拉菜单本身时关闭
-                const dropdown = userProfile.querySelector('.user-dropdown');
-                if (dropdown) {
-                    dropdown.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                    });
-                }
-            }
-            
-            // 登出按钮点击事件
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', async function(e) {
-                    e.preventDefault();
-                    // 添加确认询问
-                    if (confirm('Are you sure you want to logout?')) {
-                        try {
-                            await authService.logoutUser();
-                            console.log('用户已登出');
-                        } catch (error) {
-                            console.error('登出失败:', error);
-                        }
-                    }
-                });
-            }
-            
             // 获取URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout') || 'N/A';
             const planType = urlParams.get('plan') || 'monthly';
             const uid = urlParams.get('uid') || null;
-            
+                
             // 更新交易信息
             document.getElementById('transaction-id').textContent = checkoutId;
             document.getElementById('transaction-id-zh').textContent = checkoutId;
@@ -338,14 +277,14 @@
                     // 用户已登录
                     document.getElementById('user-id').textContent = user.uid;
                     document.getElementById('user-id-zh').textContent = user.uid;
-                    
+        
                     // 通知扩展支付成功
-                    try {
+            try {
                         chrome.runtime.sendMessage('ldpadjcdbfndeghcklogoppmbnmphbki', {
-                            type: 'PAYMENT_SUCCESS',
+                    type: 'PAYMENT_SUCCESS',
                             data: {
                                 userId: user.uid,
-                                checkoutId: checkoutId,
+                    checkoutId: checkoutId,
                                 planType: planType
                             }
                         }, function(response) {
@@ -362,9 +301,9 @@
                     // 用户未登录且URL中无uid
                     document.getElementById('user-id').textContent = 'Not logged in';
                     document.getElementById('user-id-zh').textContent = '未登录';
-                }
+                        }
+                    });
             });
-        });
     </script>
 </body>
 </html> 

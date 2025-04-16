@@ -220,63 +220,61 @@
   font-weight: 500;
 }
 
-/* 完全重写用户下拉菜单样式 */
+/* 用户下拉菜单样式 */
 .user-dropdown {
   position: absolute;
-  top: calc(100% + 5px);
+  top: 100%;
   right: 0;
-  width: 180px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-5px);
-  transition: all 0.2s ease;
+  width: 220px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: none;
   z-index: 1000;
-  overflow: hidden;
+  margin-top: 8px;
 }
 
-.user-dropdown.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.user-profile:hover .user-dropdown {
+  display: block;
 }
 
-.user-dropdown ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.user-dropdown ul li {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.user-dropdown ul li:last-child {
-  border-bottom: none;
-}
-
-.user-dropdown ul li a {
-  display: flex;
-  align-items: center;
+.user-info {
   padding: 12px 16px;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  word-break: break-all;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #eee;
+  margin: 4px 0;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 8px 16px;
   color: #333;
   text-decoration: none;
+  cursor: pointer;
   font-size: 14px;
-  transition: all 0.2s;
 }
 
-.user-dropdown ul li a.logout-link {
-  color: #e53935;
+.dropdown-item:hover {
+  background: #f5f5f5;
 }
 
-.user-dropdown ul li a.logout-link:hover {
-  background-color: #ffebee;
-}
-
-.user-dropdown ul li a:hover {
-  background-color: #f5f5f5;
+.logout-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  color: #E53935;
+  font-weight: 500;
 }
 
 /* 认证按钮样式 */

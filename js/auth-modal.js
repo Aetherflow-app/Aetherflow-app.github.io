@@ -467,6 +467,49 @@ class AuthModal {
             avatarElement.textContent = (user.displayName || '用户').charAt(0).toUpperCase();
           }
         }
+        
+        // 创建或更新下拉菜单
+        let dropdownElement = element.querySelector('.user-dropdown');
+        if (!dropdownElement) {
+          dropdownElement = document.createElement('div');
+          dropdownElement.className = 'user-dropdown';
+          
+          // 下拉菜单内容
+          dropdownElement.innerHTML = `
+            <div class="user-info">
+              <p class="user-email">${user.email || ''}</p>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a href="account.html" class="dropdown-item">账号设置</a>
+            <a href="subscription.html" class="dropdown-item">订阅管理</a>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item logout-btn">退出登录</button>
+          `;
+          
+          // 添加登出事件监听
+          const logoutBtn = dropdownElement.querySelector('.logout-btn');
+          logoutBtn.addEventListener('click', async () => {
+            try {
+              await authService.logoutUser();
+              // 重定向到首页
+              if (window.location.pathname !== '/' && 
+                  window.location.pathname !== '/index.html') {
+                window.location.href = 'index.html';
+              }
+            } catch (error) {
+              console.error('登出失败:', error);
+              alert('登出失败，请重试');
+            }
+          });
+          
+          element.appendChild(dropdownElement);
+        } else {
+          // 更新已存在的下拉菜单
+          const emailElement = dropdownElement.querySelector('.user-email');
+          if (emailElement) {
+            emailElement.textContent = user.email || '';
+          }
+        }
       });
     } else {
       // 用户未登录
@@ -476,6 +519,12 @@ class AuthModal {
       
       userProfileElements.forEach(element => {
         element.style.display = 'none';
+        
+        // 移除下拉菜单
+        const dropdownElement = element.querySelector('.user-dropdown');
+        if (dropdownElement) {
+          element.removeChild(dropdownElement);
+        }
       });
     }
   }

@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - AetherFlow</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/auth-modal.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <style>
         .contact-section {
             padding: 5rem 0;
@@ -170,6 +174,16 @@
                     <li><a href="contact.html" class="active">Contact</a></li>
                 </ul>
             </nav>
+            <div class="header-actions">
+                <!-- 登录/注册按钮 -->
+                <button class="auth-button" id="login-button">Login / Register</button>
+                
+                <!-- 用户个人资料 (默认隐藏) -->
+                <div class="user-profile" style="display: none;">
+                    <div class="user-avatar">U</div>
+                    <span class="user-name">User</span>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -252,34 +266,37 @@
 
     <footer>
         <div class="container">
-            <div class="footer-content">
+            <div class="footer-grid">
                 <div class="footer-logo">
                     <h2>AetherFlow</h2>
-                    <p>AI prompt management made simple.</p>
+                    <p>AI-powered research assistant for academics and researchers.</p>
                 </div>
                 <div class="footer-links">
-                    <h4>Product</h4>
+                    <h3>Product</h3>
                     <ul>
                         <li><a href="index.html">Home</a></li>
+                        <li><a href="features.html">Features</a></li>
                         <li><a href="pricing.html">Pricing</a></li>
-                        <li><a href="#features">Features</a></li>
                     </ul>
                 </div>
                 <div class="footer-links">
-                    <h4>Legal</h4>
+                    <h3>Legal</h3>
                     <ul>
                         <li><a href="terms-of-service.html">Terms of Service</a></li>
                         <li><a href="privacy-policy.html">Privacy Policy</a></li>
                         <li><a href="refund-policy.html">Refund Policy</a></li>
                     </ul>
                 </div>
-                <div class="footer-contact">
-                    <h4>Contact</h4>
-                    <p>Email: <a href="mailto:support@aetherflow.app">support@aetherflow.app</a></p>
+                <div class="footer-links">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><a href="contact.html">Contact Us</a></li>
+                        <li><a href="mailto:support@aetherflow.app">support@aetherflow.app</a></li>
+                    </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 AetherFlow. All rights reserved.</p>
+                <p>&copy; 2023 AetherFlow. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -291,5 +308,11 @@
             // 如果你想自行处理，可以替换这部分代码
         });
     </script>
+
+    <!-- 加载Firebase配置和认证服务 -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    <script src="js/auth-modal.js"></script>
+    <script src="js/header.js"></script>
 </body>
 </html> 
