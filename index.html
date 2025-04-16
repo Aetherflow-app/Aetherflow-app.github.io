@@ -37,6 +37,11 @@
                 <div class="user-profile" style="display: none;">
                     <div class="user-avatar">U</div>
                     <span class="user-name">User</span>
+                    <div class="user-dropdown">
+                        <ul>
+                            <li><a href="#" id="logout-button">Logout</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -306,6 +311,36 @@
             loginButton.addEventListener('click', function() {
                 authModal.open();
             });
+            
+            // 登出按钮点击事件
+            const logoutButton = document.getElementById('logout-button');
+            logoutButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    await authService.logoutUser();
+                    console.log('用户已登出');
+                } catch (error) {
+                    console.error('登出失败:', error);
+                }
+            });
+            
+            // 添加用户头像点击事件，显示/隐藏下拉菜单
+            const userProfile = document.querySelector('.user-profile');
+            if (userProfile) {
+                userProfile.addEventListener('click', function(e) {
+                    const dropdown = userProfile.querySelector('.user-dropdown');
+                    dropdown.classList.toggle('active');
+                    e.stopPropagation();
+                });
+                
+                // 点击其他区域关闭下拉菜单
+                document.addEventListener('click', function() {
+                    const dropdown = userProfile.querySelector('.user-dropdown');
+                    if (dropdown.classList.contains('active')) {
+                        dropdown.classList.remove('active');
+                    }
+                });
+            }
         });
     </script>
 </body>
