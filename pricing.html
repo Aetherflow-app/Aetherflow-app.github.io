@@ -41,7 +41,7 @@
                     <span class="user-name">User</span>
                     <div class="user-dropdown">
                         <ul>
-                            <li><a href="#" id="logout-button">Logout</a></li>
+                            <li><a href="#" id="logout-button" class="logout-link">Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                         <div class="most-popular">Most Popular</div>
                         <div class="card-header">
                             <h3>Pro</h3>
-                            <div class="price">$4.99</div>
+                            <div class="price">$3.99</div>
                             <p>per month</p>
                         </div>
                         <div class="card-features">
@@ -335,11 +335,14 @@
             const logoutButton = document.getElementById('logout-button');
             logoutButton.addEventListener('click', async function(e) {
                 e.preventDefault();
-                try {
-                    await authService.logoutUser();
-                    console.log('用户已登出');
-                } catch (error) {
-                    console.error('登出失败:', error);
+                // 添加确认询问
+                if (confirm('Are you sure you want to logout?')) {
+                    try {
+                        await authService.logoutUser();
+                        console.log('用户已登出');
+                    } catch (error) {
+                        console.error('登出失败:', error);
+                    }
                 }
             });
             
@@ -349,7 +352,6 @@
                 userProfile.addEventListener('click', function(e) {
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     dropdown.classList.toggle('active');
-                    userProfile.classList.toggle('dropdown-active');
                     e.stopPropagation();
                 });
                 
@@ -358,7 +360,6 @@
                     const dropdown = userProfile.querySelector('.user-dropdown');
                     if (dropdown.classList.contains('active')) {
                         dropdown.classList.remove('active');
-                        userProfile.classList.remove('dropdown-active');
                     }
                 });
             }
