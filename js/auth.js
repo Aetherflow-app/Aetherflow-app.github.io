@@ -426,7 +426,7 @@ function handleIdTokenFromUrl() {
         
         // 显示加载状态提示 (依赖 ui.js)
         if (typeof showAuthLoadingToast === 'function') {
-            showAuthLoadingToast("正在从扩展同步登录...");
+            showAuthLoadingToast("Syncing login from extension...");
             console.log('[Website Auth Debug] 显示加载提示');
         } else {
             console.log("[Website Auth Debug] 正在同步登录...(未找到toast函数)");
