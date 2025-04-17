@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -191,6 +195,10 @@
         </div>
     </footer>
 
+    <div id="user-specific-message" style="display: none;">
+        <p class="text-lg mb-6">Thank you, <span id="user-name">User</span>! Your pro membership is now active across all your devices.</p>
+    </div>
+
     <script>
         // 切换语言
         function toggleLanguage() {
@@ -223,11 +231,27 @@
             // 应用保存的语言偏好
             applyLanguagePreference();
             
+            // 初始化Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+                authDomain: "aetherflow-b6459.firebaseapp.com",
+                projectId: "aetherflow-b6459",
+                storageBucket: "aetherflow-b6459.firebasestorage.app",
+                messagingSenderId: "423266303314",
+                appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+                measurementId: "G-ZD5E2WY22N"
+            };
+            
+            firebase.initializeApp(firebaseConfig);
+            
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
             const envParam = urlParams.get('env');
+            const userId = urlParams.get('uid');
+            
+            console.log('Payment success parameters:', { checkoutId, planType, userId });
             
             // 判断环境
             const isSandbox = envParam === 'sandbox' || 
@@ -283,8 +307,8 @@
                     if (planElementZh) planElementZh.textContent = '月度';
                 }
                 
-                // 尝试与扩展通信，更新会员状态
-                communicateWithExtension(checkoutId, planType);
+                // 尝试向扩展发送支付成功消息
+                sendPaymentSuccessToExtension(checkoutId, planType, userId);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
@@ -294,38 +318,76 @@
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
             updateExtensionButtons();
+            
+            // 如果有用户ID，验证用户登录状态
+            if (userId) {
+                // 监听Firebase认证状态
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (user && user.uid === userId) {
+                        // 用户已登录且ID匹配，更新UI显示用户信息
+                        updateSuccessMessageWithUser(user);
+                    } else {
+                        // 用户未登录或ID不匹配，显示通用成功消息
+                        document.getElementById('user-specific-message').style.display = 'none';
+                    }
+                });
+            } else {
+                // 没有用户ID，显示通用成功消息
+                document.getElementById('user-specific-message').style.display = 'none';
+            }
         });
         
-        // 尝试与扩展通信，通知支付成功
-        function communicateWithExtension(checkoutId, planType) {
+        // 向扩展发送支付成功消息
+        function sendPaymentSuccessToExtension(checkoutId, planType, userId) {
             try {
-                // 使用Chrome扩展消息机制
-                const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
-                
-                // 准备消息数据
+                // 构建消息数据
                 const messageData = {
-                    type: 'PAYMENT_SUCCESS',
+                    action: 'payment_success',
                     checkoutId: checkoutId,
-                    planType: planType || 'monthly',
+                    planType: planType || 'unknown',
+                    userId: userId || null,
                     timestamp: Date.now()
                 };
                 
-                console.log('Attempting to communicate with extension:', messageData);
+                console.log('Sending message to extension:', messageData);
                 
                 // 尝试发送消息到扩展
-                if (typeof chrome !== 'undefined' && chrome.runtime) {
-                    chrome.runtime.sendMessage(extensionId, messageData, function(response) {
-                        if (chrome.runtime.lastError) {
-                            console.log('Failed to communicate with extension:', chrome.runtime.lastError);
-                        } else {
-                            console.log('Successfully communicated with extension:', response);
-                        }
-                    });
-                } else {
-                    console.log('Chrome API not available. Data saved to localStorage for later retrieval.');
-                }
+                chrome.runtime.sendMessage(messageData, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log('Extension communication error:', chrome.runtime.lastError);
+                        // 使用localStorage备份，扩展可以在下次启动时检查
+                        savePaymentDataToLocalStorage(messageData);
+                    } else {
+                        console.log('Extension response:', response);
+                    }
+                });
             } catch (error) {
-                console.error('Error communicating with extension:', error);
+                console.error('Failed to send message to extension:', error);
+                // 使用localStorage备份，扩展可以在下次启动时检查
+                savePaymentDataToLocalStorage({ checkoutId, planType, userId });
+            }
+        }
+        
+        // 将支付数据保存到localStorage作为备份
+        function savePaymentDataToLocalStorage(data) {
+            try {
+                localStorage.setItem('aetherflow_payment_success', JSON.stringify(data));
+                console.log('Payment data saved to localStorage');
+            } catch (error) {
+                console.error('Failed to save payment data to localStorage:', error);
+            }
+        }
+        
+        // 更新成功消息，显示用户特定内容
+        function updateSuccessMessageWithUser(user) {
+            const userSpecificMessage = document.getElementById('user-specific-message');
+            const userNameElement = document.getElementById('user-name');
+            
+            if (userNameElement && user) {
+                // 更新用户名
+                userNameElement.textContent = user.displayName || user.email.split('@')[0];
+                // 显示用户特定消息
+                userSpecificMessage.style.display = 'block';
             }
         }
         
