@@ -8,9 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase引用 -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -102,23 +99,12 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
-                    <li class="auth-item"><a href="#" id="authButton" class="auth-button">Sign in</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <div class="language-switch" onclick="toggleLanguage()">中文 / English</div>
-
-    <!-- 用户菜单 -->
-    <div id="userDropdown" class="user-dropdown">
-        <div class="user-info">
-            <div id="userDisplayName">User Name</div>
-            <div id="userEmail">user@example.com</div>
-        </div>
-        <div class="dropdown-divider"></div>
-        <a href="#" id="logoutButton" class="dropdown-item">Sign out</a>
-    </div>
 
     <section class="success-section">
         <div class="container">
@@ -361,198 +347,6 @@
                             window.open('https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki', '_blank');
                         }
                     });
-                }
-            });
-        }
-
-        // Firebase配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
-            authDomain: "aetherflow-b6459.firebaseapp.com",
-            projectId: "aetherflow-b6459",
-            storageBucket: "aetherflow-b6459.firebasestorage.app",
-            messagingSenderId: "423266303314",
-            appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
-            measurementId: "G-ZD5E2WY22N"
-        };
-
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-
-        // 添加到window.onload以确保DOM完全加载
-        window.onload = function() {
-            // 初始化认证功能
-            initializeAuth();
-            
-            // 获取URL参数
-            const urlParams = new URLSearchParams(window.location.search);
-            const plan = urlParams.get('plan') || 'monthly';
-            const userId = urlParams.get('userId');
-            
-            // 如果成功获取用户ID，说明支付流程已完成
-            if (userId) {
-                // 显示对应的计划信息
-                displayPlanInfo(plan);
-                
-                // 尝试通知扩展更新会员状态
-                notifyExtension(plan, userId);
-            } else {
-                // 尝试从认证状态获取用户信息
-                firebase.auth().onAuthStateChanged(function(user) {
-                    if (user) {
-                        displayPlanInfo(plan);
-                        notifyExtension(plan, user.uid);
-                    }
-                });
-            }
-            
-            // 设置返回按钮行为
-            document.getElementById('backToExtensionButton').addEventListener('click', function() {
-                // 尝试返回扩展（如果从扩展打开）
-                if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-                    window.close();
-                } else {
-                    // 否则提示用户
-                    alert('Please open AetherFlow extension to use your new Pro features!');
-                }
-            });
-        };
-        
-        // 显示计划信息
-        function displayPlanInfo(plan) {
-            const planType = document.getElementById('plan-type');
-            const planDescription = document.getElementById('plan-type-zh');
-            
-            if (plan === 'annual') {
-                planType.textContent = 'Annual Plan';
-                planDescription.textContent = 'Your annual subscription is now active';
-            } else {
-                planType.textContent = 'Monthly Plan';
-                planDescription.textContent = 'Your monthly subscription is now active';
-            }
-        }
-        
-        // 通知扩展更新会员状态
-        function notifyExtension(plan, userId) {
-            console.log('Notifying extension with plan:', plan, 'userId:', userId);
-            
-            try {
-                // 尝试使用Chrome扩展消息API
-                if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-                    chrome.runtime.sendMessage(
-                        'ldpadjcdbfndeghcklogoppmbnmphbki', // AetherFlow扩展ID
-                        {
-                            type: 'PAYMENT_SUCCESS',
-                            data: {
-                                plan: plan,
-                                userId: userId,
-                                timestamp: Date.now()
-                            }
-                        },
-                        function(response) {
-                            if (response && response.success) {
-                                console.log('Extension notified successfully');
-                            } else {
-                                console.log('Extension notification failed or no response');
-                                // 使用localStorage作为备份
-                                storePaymentDataInLocalStorage(plan, userId);
-                            }
-                        }
-                    );
-                } else {
-                    // 如果没有chrome.runtime API (例如标准浏览器窗口)
-                    console.log('Chrome extension API not available, using localStorage');
-                    storePaymentDataInLocalStorage(plan, userId);
-                }
-            } catch (error) {
-                console.error('Error notifying extension:', error);
-                storePaymentDataInLocalStorage(plan, userId);
-            }
-        }
-        
-        // 将支付数据存储在localStorage（作为备份方案）
-        function storePaymentDataInLocalStorage(plan, userId) {
-            try {
-                localStorage.setItem('aetherflow_payment_success', JSON.stringify({
-                    plan: plan,
-                    userId: userId,
-                    timestamp: Date.now()
-                }));
-                console.log('Payment data stored in localStorage');
-            } catch (error) {
-                console.error('Failed to store payment data in localStorage:', error);
-            }
-        }
-
-        // 初始化认证功能
-        function initializeAuth() {
-            // 获取DOM元素
-            const authButton = document.getElementById('authButton');
-            const userDropdown = document.getElementById('userDropdown');
-            const userDisplayName = document.getElementById('userDisplayName');
-            const userEmail = document.getElementById('userEmail');
-            const logoutButton = document.getElementById('logoutButton');
-            
-            // 打开/关闭用户菜单
-            authButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (firebase.auth().currentUser) {
-                    // 如果已登录，显示用户下拉菜单
-                    toggleUserDropdown();
-                }
-            });
-            
-            // 点击页面其他地方关闭下拉菜单
-            window.addEventListener('click', (e) => {
-                // 点击用户下拉菜单外部关闭
-                if (userDropdown.style.display === 'block' && !e.target.closest('#authButton') && !e.target.closest('#userDropdown')) {
-                    userDropdown.style.display = 'none';
-                }
-            });
-            
-            // 切换用户下拉菜单
-            function toggleUserDropdown() {
-                if (userDropdown.style.display === 'block') {
-                    userDropdown.style.display = 'none';
-                } else {
-                    // 设置用户信息
-                    const user = firebase.auth().currentUser;
-                    if (user) {
-                        userDisplayName.textContent = user.displayName || '用户';
-                        userEmail.textContent = user.email || '';
-                        
-                        // 计算下拉菜单位置
-                        const rect = authButton.getBoundingClientRect();
-                        userDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
-                        userDropdown.style.right = (window.innerWidth - rect.right) + 'px';
-                        userDropdown.style.display = 'block';
-                    }
-                }
-            }
-            
-            // 登出功能
-            logoutButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                firebase.auth().signOut()
-                    .then(() => {
-                        userDropdown.style.display = 'none';
-                    })
-                    .catch(error => {
-                        console.error('Logout error:', error);
-                    });
-            });
-            
-            // 监听认证状态变化
-            firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    // 已登录
-                    authButton.textContent = user.displayName || user.email || 'Account';
-                    authButton.classList.add('logged-in');
-                } else {
-                    // 未登录
-                    authButton.textContent = 'Sign in';
-                    authButton.classList.remove('logged-in');
                 }
             });
         }
