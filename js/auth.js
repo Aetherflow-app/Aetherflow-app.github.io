@@ -416,19 +416,25 @@ function signInWithGoogle() {
 
 // 检查URL中的ID令牌并尝试使用后端进行认证
 function handleIdTokenFromUrl() {
+    console.log('[Website Auth Debug] 开始检查URL中的ID Token...');
     const urlParams = new URLSearchParams(window.location.search);
     const idToken = urlParams.get('idToken');
     
     if (idToken) {
+        console.log('[Website Auth Debug] 在URL中找到ID Token，长度:', idToken.length);
+        console.log('[Website Auth Debug] ID Token前10个字符:', idToken.substring(0, 10) + '...');
+        
         // 显示加载状态提示 (依赖 ui.js)
         if (typeof showAuthLoadingToast === 'function') {
             showAuthLoadingToast("正在从扩展同步登录...");
+            console.log('[Website Auth Debug] 显示加载提示');
         } else {
-            console.log("正在同步登录...");
+            console.log("[Website Auth Debug] 正在同步登录...(未找到toast函数)");
         }
 
         // 定义后端端点URL (已更新为实际URL)
         const customTokenEndpoint = 'https://create-custom-token-423266303314.us-west4.run.app/api/create-custom-token'; 
+        console.log('[Website Auth Debug] 准备调用Cloud Run端点:', customTokenEndpoint);
         
         // 调用后端函数获取 Custom Token
         fetch(customTokenEndpoint, {
@@ -439,24 +445,30 @@ function handleIdTokenFromUrl() {
             body: JSON.stringify({ idToken: idToken })
         })
         .then(response => {
+            console.log('[Website Auth Debug] 收到Cloud Run响应，状态码:', response.status);
             if (!response.ok) {
                 // 如果HTTP状态码不是2xx，抛出错误，包含状态文本
                 return response.text().then(text => { 
+                    console.error('[Website Auth Debug] Cloud Run响应错误:', response.status, text);
                     throw new Error(`后端错误 ${response.status}: ${text || response.statusText}`); 
                 });
             }
             return response.json(); // 解析JSON响应体
         })
         .then(data => {
+            console.log('[Website Auth Debug] 解析Cloud Run响应成功，包含customToken:', !!data.customToken);
             if (data && data.customToken) {
+                console.log('[Website Auth Debug] 准备使用Custom Token登录Firebase');
                 // 使用获取到的 Custom Token 登录 Firebase
                 firebase.auth().signInWithCustomToken(data.customToken)
                     .then(() => {
                         // 登录成功
+                        console.log('[Website Auth Debug] Firebase Custom Token登录成功');
                          if (typeof showAuthSuccessToast === 'function') {
                             showAuthSuccessToast();
+                            console.log('[Website Auth Debug] 显示成功提示');
                          } else {
-                            console.log("登录成功!");
+                            console.log("[Website Auth Debug] 登录成功! (未找到toast函数)");
                          }
                         
                         // 清除URL中的idToken参数，保留其他参数
@@ -466,28 +478,34 @@ function handleIdTokenFromUrl() {
                           ? `${window.location.pathname}?${newParams.toString()}`
                           : window.location.pathname;
                         window.history.replaceState({}, document.title, newUrl);
+                        console.log('[Website Auth Debug] 已从URL中清除ID Token');
                     })
                     .catch((error) => {
                         // Custom Token 登录失败
-                        console.error('Firebase Custom Token 登录失败:', error);
+                        console.error('[Website Auth Debug] Firebase Custom Token 登录失败:', error);
                          if (typeof showAuthErrorToast === 'function') {
                             showAuthErrorToast(`登录失败: ${error.code}`);
+                            console.log('[Website Auth Debug] 显示错误提示:', error.code);
                          } else {
                             alert(`登录失败: ${error.message}`);
+                            console.log('[Website Auth Debug] 显示错误提示(alert):', error.message);
                          }
                     });
             } else {
                 // 后端返回的数据格式不正确
+                console.error('[Website Auth Debug] Cloud Run返回的数据缺少customToken字段');
                 throw new Error('从后端接收到的令牌格式不正确');
             }
         })
         .catch((error) => {
             // 网络错误或后端处理错误
-            console.error('调用后端获取 Custom Token 失败:', error);
+            console.error('[Website Auth Debug] 调用Cloud Run获取Custom Token失败:', error);
              if (typeof showAuthErrorToast === 'function') {
                 showAuthErrorToast(`同步登录失败: ${error.message}`);
+                console.log('[Website Auth Debug] 显示错误提示:', error.message);
              } else {
                 alert(`同步登录失败: ${error.message}`);
+                console.log('[Website Auth Debug] 显示错误提示(alert):', error.message);
              }
             // 可选：也清除URL中的idToken，避免重复尝试
              const newParams = new URLSearchParams(window.location.search);
@@ -496,7 +514,10 @@ function handleIdTokenFromUrl() {
                ? `${window.location.pathname}?${newParams.toString()}`
                : window.location.pathname;
              window.history.replaceState({}, document.title, newUrl);
+             console.log('[Website Auth Debug] 已从URL中清除ID Token');
         });
+    } else {
+        console.log('[Website Auth Debug] URL中未找到ID Token，跳过认证同步');
     }
 }
 
