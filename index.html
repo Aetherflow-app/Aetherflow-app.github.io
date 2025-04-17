@@ -10,134 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    
-    <!-- Firebase UI -->
-    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
-    
-    <!-- 自定义认证CSS -->
-    <style>
-        /* 认证相关样式 */
-        .auth-btn {
-            background: transparent;
-            border: 1px solid #4A90E2;
-            color: #4A90E2;
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .auth-btn:hover {
-            background: rgba(74, 144, 226, 0.1);
-        }
-        
-        .user-menu {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #4A90E2;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 8px;
-        }
-        
-        .user-dropdown {
-            position: absolute;
-            top: 40px;
-            right: 0;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 10px 0;
-            min-width: 150px;
-            display: none;
-            z-index: 1000;
-        }
-        
-        .user-dropdown.active {
-            display: block;
-        }
-        
-        .user-dropdown a, .user-dropdown button {
-            display: block;
-            padding: 8px 15px;
-            text-align: left;
-            width: 100%;
-            background: none;
-            border: none;
-            font-size: 14px;
-            color: #333;
-            cursor: pointer;
-        }
-        
-        .user-dropdown a:hover, .user-dropdown button:hover {
-            background: #f5f5f5;
-        }
-        
-        /* 模态框样式 */
-        .auth-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .auth-modal.active {
-            display: flex;
-        }
-        
-        .auth-container {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            position: relative;
-        }
-        
-        .auth-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #999;
-        }
-        
-        .auth-title {
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .firebase-ui-container {
-            min-height: 250px;
-        }
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 </head>
 <body>
     <header>
@@ -153,16 +27,7 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
-                    <li id="auth-section" class="auth-section">
-                        <button id="sign-in-btn" class="auth-btn">Sign in</button>
-                        <div id="user-menu" class="user-menu" style="display: none;">
-                            <div id="user-avatar" class="user-avatar">U</div>
-                            <span id="user-name">User</span>
-                            <div id="user-dropdown" class="user-dropdown">
-                                <button id="sign-out-btn">Sign out</button>
-                            </div>
-                        </div>
-                    </li>
+                    <li><a href="#" id="auth-button" class="auth-button">Sign in</a></li>
                 </ul>
             </nav>
         </div>
@@ -422,6 +287,12 @@
             if (videoPlaceholder) {
                 videoPlaceholder.addEventListener('click', playDemo);
             }
+            
+            // 初始化Firebase
+            initFirebase();
+            
+            // 设置认证按钮监听器
+            setupAuthUI();
         });
 
         function playDemo() {
@@ -429,161 +300,361 @@
             // 替换视频容器内容为YouTube嵌入式播放器
             videoContainer.innerHTML = '<div class="embed-responsive"><iframe width="100%" height="450" src="https://www.youtube.com/embed/vSwZ517-0Wg?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
         }
-    </script>
-
-    <!-- 认证模态框 -->
-    <div id="auth-modal" class="auth-modal">
-        <div class="auth-container">
-            <button id="auth-close" class="auth-close">&times;</button>
-            <h3 class="auth-title">Sign in to AetherFlow</h3>
-            <div id="firebaseui-auth-container" class="firebase-ui-container"></div>
-        </div>
-    </div>
-
-    <!-- 添加认证脚本 -->
-    <script>
-        // Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
-            authDomain: "aetherflow-b6459.firebaseapp.com",
-            projectId: "aetherflow-b6459",
-            storageBucket: "aetherflow-b6459.firebasestorage.app",
-            messagingSenderId: "423266303314",
-            appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
-            measurementId: "G-ZD5E2WY22N"
-        };
         
-        // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
-        
-        // 认证UI配置
-        const uiConfig = {
-            signInFlow: 'popup',
-            signInOptions: [
-                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-                firebase.auth.EmailAuthProvider.PROVIDER_ID
-            ],
-            callbacks: {
-                signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-                    // 登录成功后更新UI，不重定向
-                    updateAuthUI();
-                    closeAuthModal();
-                    return false;
-                }
-            },
-            tosUrl: 'terms-of-service.html',
-            privacyPolicyUrl: 'privacy-policy.html'
-        };
-        
-        // 初始化变量
-        let ui;
-        let authToken = '';
-        
-        // 初始化UI组件
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取UI元素
-            const signInBtn = document.getElementById('sign-in-btn');
-            const userMenu = document.getElementById('user-menu');
-            const userAvatar = document.getElementById('user-avatar');
-            const userName = document.getElementById('user-name');
-            const userDropdown = document.getElementById('user-dropdown');
-            const signOutBtn = document.getElementById('sign-out-btn');
-            const authModal = document.getElementById('auth-modal');
-            const authClose = document.getElementById('auth-close');
+        // Firebase配置和初始化
+        function initFirebase() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+                authDomain: "aetherflow-b6459.firebaseapp.com",
+                projectId: "aetherflow-b6459",
+                storageBucket: "aetherflow-b6459.firebasestorage.app",
+                messagingSenderId: "423266303314",
+                appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+                measurementId: "G-ZD5E2WY22N"
+            };
             
-            // 检查URL参数中是否有认证令牌
-            checkAuthTokenInUrl();
+            // 初始化Firebase
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
             
-            // 初始化Firebase UI
-            ui = new firebaseui.auth.AuthUI(firebase.auth());
-            
-            // 设置按钮事件
-            signInBtn.addEventListener('click', function() {
-                openAuthModal();
-            });
-            
-            userMenu.addEventListener('click', function(e) {
-                userDropdown.classList.toggle('active');
-                e.stopPropagation();
-            });
-            
-            signOutBtn.addEventListener('click', function() {
-                firebase.auth().signOut().then(() => {
-                    updateAuthUI();
-                    userDropdown.classList.remove('active');
-                });
-            });
-            
-            authClose.addEventListener('click', function() {
-                closeAuthModal();
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (userDropdown.classList.contains('active') && !userMenu.contains(e.target)) {
-                    userDropdown.classList.remove('active');
-                }
-                
-                if (authModal.classList.contains('active') && !authModal.querySelector('.auth-container').contains(e.target)) {
-                    closeAuthModal();
-                }
-            });
+            // 检查URL中是否有认证令牌
+            checkForAuthToken();
             
             // 监听认证状态变化
-            firebase.auth().onAuthStateChanged(function(user) {
-                updateAuthUI(user);
-            });
-        });
-        
-        // 打开认证模态框
-        function openAuthModal() {
-            const authModal = document.getElementById('auth-modal');
-            authModal.classList.add('active');
-            
-            // 启动Firebase UI
-            ui.start('#firebaseui-auth-container', uiConfig);
+            firebase.auth().onAuthStateChanged(handleAuthStateChanged);
         }
         
-        // 关闭认证模态框
-        function closeAuthModal() {
-            const authModal = document.getElementById('auth-modal');
-            authModal.classList.remove('active');
-        }
-        
-        // 更新认证UI
-        function updateAuthUI(user) {
-            const signInBtn = document.getElementById('sign-in-btn');
-            const userMenu = document.getElementById('user-menu');
-            const userAvatar = document.getElementById('user-avatar');
-            const userName = document.getElementById('user-name');
+        // 处理认证状态变化
+        function handleAuthStateChanged(user) {
+            const authButton = document.getElementById('auth-button');
             
             if (user) {
                 // 用户已登录
-                signInBtn.style.display = 'none';
-                userMenu.style.display = 'flex';
+                console.log('用户已登录:', user.email);
+                authButton.textContent = user.displayName || user.email.split('@')[0];
+                authButton.classList.add('auth-logged-in');
                 
-                // 设置用户信息
-                if (user.photoURL) {
-                    userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || user.email}" style="width:100%;height:100%;border-radius:50%;">`;
-                } else {
-                    userAvatar.textContent = (user.displayName || user.email || 'User').charAt(0).toUpperCase();
-                }
-                
-                userName.textContent = user.displayName || user.email.split('@')[0];
-                
-                // 获取认证令牌
-                user.getIdToken().then(function(token) {
-                    authToken = token;
-                });
+                // 保存用户状态到本地存储
+                localStorage.setItem('aetherflow_user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                }));
             } else {
                 // 用户未登录
-                signInBtn.style.display = 'block';
-                userMenu.style.display = 'none';
-                authToken = '';
+                console.log('用户未登录');
+                authButton.textContent = 'Sign in';
+                authButton.classList.remove('auth-logged-in');
+                
+                // 清除本地存储中的用户信息
+                localStorage.removeItem('aetherflow_user');
             }
         }
         
-        // 检查URL中是否包含认证令牌
-        function checkAuthTokenInUrl() {
+        // 设置认证UI
+        function setupAuthUI() {
+            const authButton = document.getElementById('auth-button');
+            
+            authButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (firebase.auth().currentUser) {
+                    // 如果用户已登录，显示用户菜单
+                    showUserMenu(this);
+                } else {
+                    // 如果用户未登录，显示登录模态框
+                    showAuthModal();
+                }
+            });
+        }
+        
+        // 显示用户菜单
+        function showUserMenu(buttonElement) {
+            // 检查是否已有菜单
+            let menu = document.getElementById('user-menu');
+            
+            if (menu) {
+                // 如果菜单已存在，切换显示/隐藏
+                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                return;
+            }
+            
+            // 创建用户菜单
+            menu = document.createElement('div');
+            menu.id = 'user-menu';
+            menu.className = 'user-menu';
+            
+            // 添加菜单项
+            menu.innerHTML = `
+                <div class="user-menu-item" id="sign-out">Sign out</div>
+            `;
+            
+            // 定位菜单
+            const rect = buttonElement.getBoundingClientRect();
+            menu.style.position = 'absolute';
+            menu.style.top = (rect.bottom + window.scrollY) + 'px';
+            menu.style.right = (window.innerWidth - rect.right) + 'px';
+            menu.style.backgroundColor = '#fff';
+            menu.style.boxShadow = 'var(--box-shadow)';
+            menu.style.borderRadius = 'var(--border-radius)';
+            menu.style.padding = '8px 0';
+            menu.style.zIndex = '1000';
+            menu.style.minWidth = '150px';
+            
+            // 菜单项样式
+            const menuItems = menu.querySelectorAll('.user-menu-item');
+            menuItems.forEach(item => {
+                item.style.padding = '10px 15px';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'var(--transition)';
+                
+                // 添加悬停效果
+                item.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#f9fafb';
+                });
+                item.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+            
+            // 添加登出点击事件
+            menu.querySelector('#sign-out').addEventListener('click', function() {
+                firebase.auth().signOut().then(() => {
+                    menu.style.display = 'none';
+                }).catch(error => {
+                    console.error('登出失败:', error);
+                });
+            });
+            
+            // 添加到DOM
+            document.body.appendChild(menu);
+            
+            // 点击文档其他地方关闭菜单
+            document.addEventListener('click', function closeMenu(e) {
+                if (e.target !== buttonElement && !menu.contains(e.target)) {
+                    menu.style.display = 'none';
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }
+        
+        // 显示认证模态框
+        function showAuthModal() {
+            // 检查是否已有模态框
+            let modal = document.getElementById('auth-modal');
+            
+            if (modal) {
+                modal.style.display = 'flex';
+                return;
+            }
+            
+            // 创建模态框
+            modal = document.createElement('div');
+            modal.id = 'auth-modal';
+            modal.className = 'auth-modal';
+            modal.style.display = 'flex';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+            
+            // 创建模态框内容
+            const modalContent = document.createElement('div');
+            modalContent.className = 'auth-modal-content';
+            modalContent.style.width = '100%';
+            modalContent.style.maxWidth = '400px';
+            modalContent.style.backgroundColor = '#fff';
+            modalContent.style.borderRadius = 'var(--border-radius-lg)';
+            modalContent.style.padding = '24px';
+            modalContent.style.boxShadow = 'var(--box-shadow-lg)';
+            modalContent.style.position = 'relative';
+            
+            // 添加关闭按钮
+            const closeButton = document.createElement('button');
+            closeButton.innerHTML = '&times;';
+            closeButton.style.position = 'absolute';
+            closeButton.style.top = '15px';
+            closeButton.style.right = '15px';
+            closeButton.style.border = 'none';
+            closeButton.style.background = 'none';
+            closeButton.style.fontSize = '24px';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.color = 'var(--gray)';
+            closeButton.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            // 创建标签页按钮
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'auth-tabs';
+            tabButtons.style.display = 'flex';
+            tabButtons.style.marginBottom = '20px';
+            tabButtons.style.borderBottom = '1px solid #eee';
+            
+            const loginTab = document.createElement('button');
+            loginTab.textContent = 'Sign in';
+            loginTab.className = 'auth-tab active';
+            loginTab.dataset.tab = 'login';
+            loginTab.style.flex = '1';
+            loginTab.style.padding = '10px';
+            loginTab.style.background = 'none';
+            loginTab.style.border = 'none';
+            loginTab.style.borderBottom = '2px solid var(--primary)';
+            loginTab.style.color = 'var(--primary)';
+            loginTab.style.fontWeight = '600';
+            loginTab.style.cursor = 'pointer';
+            
+            const registerTab = document.createElement('button');
+            registerTab.textContent = 'Sign up';
+            registerTab.className = 'auth-tab';
+            registerTab.dataset.tab = 'register';
+            registerTab.style.flex = '1';
+            registerTab.style.padding = '10px';
+            registerTab.style.background = 'none';
+            registerTab.style.border = 'none';
+            registerTab.style.borderBottom = '2px solid transparent';
+            registerTab.style.color = 'var(--gray)';
+            registerTab.style.fontWeight = '600';
+            registerTab.style.cursor = 'pointer';
+            
+            // 添加标签页按钮事件
+            loginTab.addEventListener('click', function() {
+                registerTab.style.borderBottom = '2px solid transparent';
+                registerTab.style.color = 'var(--gray)';
+                this.style.borderBottom = '2px solid var(--primary)';
+                this.style.color = 'var(--primary)';
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('register-form').style.display = 'none';
+            });
+            
+            registerTab.addEventListener('click', function() {
+                loginTab.style.borderBottom = '2px solid transparent';
+                loginTab.style.color = 'var(--gray)';
+                this.style.borderBottom = '2px solid var(--primary)';
+                this.style.color = 'var(--primary)';
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('register-form').style.display = 'block';
+            });
+            
+            tabButtons.appendChild(loginTab);
+            tabButtons.appendChild(registerTab);
+            
+            // 创建登录表单
+            const loginForm = document.createElement('form');
+            loginForm.id = 'login-form';
+            loginForm.style.display = 'block';
+            
+            loginForm.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <label for="login-email" style="display: block; margin-bottom: 8px; font-weight: 500;">Email</label>
+                    <input type="email" id="login-email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="login-password" style="display: block; margin-bottom: 8px; font-weight: 500;">Password</label>
+                    <input type="password" id="login-password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <a href="#" id="forgot-password" style="font-size: 14px; color: var(--primary); text-decoration: none;">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign in</button>
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="margin-bottom: 12px; color: var(--gray);">Or sign in with</p>
+                    <button type="button" id="google-signin" class="btn btn-outline" style="width: 100%;">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 18px; margin-right: 8px; vertical-align: middle;">
+                        Google
+                    </button>
+                </div>
+            `;
+            
+            // 创建注册表单
+            const registerForm = document.createElement('form');
+            registerForm.id = 'register-form';
+            registerForm.style.display = 'none';
+            
+            registerForm.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <label for="register-email" style="display: block; margin-bottom: 8px; font-weight: 500;">Email</label>
+                    <input type="email" id="register-email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="register-password" style="display: block; margin-bottom: 8px; font-weight: 500;">Password</label>
+                    <input type="password" id="register-password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign up</button>
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="margin-bottom: 12px; color: var(--gray);">Or sign up with</p>
+                    <button type="button" id="google-signup" class="btn btn-outline" style="width: 100%;">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 18px; margin-right: 8px; vertical-align: middle;">
+                        Google
+                    </button>
+                </div>
+            `;
+            
+            // 添加表单提交事件
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        modal.style.display = 'none';
+                    })
+                    .catch((error) => {
+                        alert(`Login failed: ${error.message}`);
+                    });
+            });
+            
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                
+                firebase.auth().createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        modal.style.display = 'none';
+                    })
+                    .catch((error) => {
+                        alert(`Registration failed: ${error.message}`);
+                    });
+            });
+            
+            // 组装模态框
+            modalContent.appendChild(closeButton);
+            modalContent.appendChild(tabButtons);
+            modalContent.appendChild(loginForm);
+            modalContent.appendChild(registerForm);
+            modal.appendChild(modalContent);
+            
+            // 添加到DOM
+            document.body.appendChild(modal);
+            
+            // 设置Google登录
+            document.getElementById('google-signin').addEventListener('click', signInWithGoogle);
+            document.getElementById('google-signup').addEventListener('click', signInWithGoogle);
+        }
+        
+        // 使用Google登录
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    document.getElementById('auth-modal').style.display = 'none';
+                })
+                .catch((error) => {
+                    alert(`Google sign in failed: ${error.message}`);
+                });
+        }
+        
+        // 检查URL中的认证令牌
+        function checkForAuthToken() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             
