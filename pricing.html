@@ -10,6 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <!-- Firebase引用 -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 </head>
 <body>
     <header>
@@ -25,10 +28,95 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
+                    <li class="auth-item"><a href="#" id="authButton" class="auth-button">Sign in</a></li>
                 </ul>
             </nav>
         </div>
     </header>
+
+    <!-- 认证模态框 -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-modal-content">
+            <span class="auth-close">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab">Sign in</button>
+                <button class="auth-tab" id="registerTab">Sign up</button>
+            </div>
+            <div id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Your password">
+                </div>
+                <div class="form-error" id="loginError"></div>
+                <div class="form-actions">
+                    <button id="loginButton" class="btn btn-primary">Sign in</button>
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    <button id="googleLoginButton" class="btn btn-outline btn-google">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                        Sign in with Google
+                    </button>
+                    <div class="form-help">
+                        <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                    </div>
+                </div>
+            </div>
+            <div id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="registerName">Name</label>
+                    <input type="text" id="registerName" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" placeholder="Create password">
+                </div>
+                <div class="form-error" id="registerError"></div>
+                <div class="form-actions">
+                    <button id="registerButton" class="btn btn-primary">Sign up</button>
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    <button id="googleRegisterButton" class="btn btn-outline btn-google">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                        Sign up with Google
+                    </button>
+                </div>
+            </div>
+            <div id="forgotPasswordForm" class="auth-form">
+                <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input type="email" id="resetEmail" placeholder="Your email">
+                </div>
+                <div class="form-error" id="resetError"></div>
+                <div class="form-success" id="resetSuccess"></div>
+                <div class="form-actions">
+                    <button id="resetPasswordButton" class="btn btn-primary">Reset Password</button>
+                    <div class="form-help">
+                        <a href="#" id="backToLoginLink">Back to login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户菜单 -->
+    <div id="userDropdown" class="user-dropdown">
+        <div class="user-info">
+            <div id="userDisplayName">User Name</div>
+            <div id="userEmail">user@example.com</div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <a href="#" id="logoutButton" class="dropdown-item">Sign out</a>
+    </div>
 
     <section class="pricing-hero">
         <div class="container">
@@ -295,257 +383,458 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化FAQ切换
-            const faqQuestions = document.querySelectorAll('.faq-question');
-            
-            faqQuestions.forEach(item => {
-                item.addEventListener('click', function() {
-                    const faqItem = item.parentNode;
-                    const answer = faqItem.querySelector('.faq-answer');
-                    const toggle = item.querySelector('.faq-toggle');
-                    
-                    // 切换class
-                    faqItem.classList.toggle('open');
-                    
-                    // 更新切换图标
-                    if (faqItem.classList.contains('open')) {
-                        toggle.textContent = '-';
-                        answer.style.maxHeight = answer.scrollHeight + 'px';
-                    } else {
-                        toggle.textContent = '+';
-                        answer.style.maxHeight = '0';
-                    }
-                });
-            });
-            
-            // 初始化Paddle支付
-            initializePaddle();
-            
-            // 设置结账点击处理函数
-            document.querySelector('.monthly-checkout').addEventListener('click', function(e) {
-                e.preventDefault();
-                openCheckout('monthly');
-            });
-            
-            document.querySelector('.annual-checkout').addEventListener('click', function(e) {
-                e.preventDefault();
-                openCheckout('annual');
-            });
-        });
-        
-        // 切换月度和年度价格
-        function showMonthly() {
-            document.querySelector('.monthly-plan').style.display = 'block';
-            document.querySelector('.annual-plan').style.display = 'none';
-            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.pricing-tab')[0].classList.add('active');
-        }
-        
-        function showAnnual() {
-            document.querySelector('.monthly-plan').style.display = 'none';
-            document.querySelector('.annual-plan').style.display = 'block';
-            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.pricing-tab')[1].classList.add('active');
-        }
-        
-        // 滚动到价格计划部分
-        function scrollToPlans() {
-            document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // 初始化Paddle支付系统
-        function initializePaddle() {
-            // 1. 检查URL参数是否有明确的环境指定
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+            authDomain: "aetherflow-b6459.firebaseapp.com",
+            projectId: "aetherflow-b6459",
+            storageBucket: "aetherflow-b6459.firebasestorage.app",
+            messagingSenderId: "423266303314",
+            appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+            measurementId: "G-ZD5E2WY22N"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // 添加到window.onload以确保DOM完全加载
+        window.onload = function() {
+            // 其他现有的onload代码
+            // 处理切换月度/年度价格的功能
+            // ... existing code ...
+
+            // 初始化认证功能
+            initializeAuth();
+        };
+
+        // 检查URL参数中是否包含认证令牌
+        function checkAuthTokenInUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const envParam = urlParams.get('env');
+            const token = urlParams.get('token');
             
-            // 2. 判断环境
-            // 明确参数指定的环境 > 域名判断环境
-            let useSandbox = false;
-            
-            // 如果URL参数明确指定了环境
-            if (envParam) {
-                useSandbox = envParam === 'sandbox' || envParam === 'test';
-            } else {
-                // 判断开发环境
-                const isLocalhost = window.location.hostname === 'localhost' || 
-                                   window.location.hostname === '127.0.0.1' ||
-                                   window.location.hostname.includes('github.dev');
-                                   
-                // 判断非生产环境
-                const isNonProduction = isLocalhost || 
-                                       window.location.hostname.includes('github.io') ||
-                                       window.location.hostname.includes('test');
-                                   
-                // 非生产环境默认使用沙盒
-                useSandbox = isNonProduction;
+            if (token) {
+                // 使用令牌登录
+                firebase.auth().signInWithCustomToken(token)
+                    .then(() => {
+                        console.log("使用令牌成功登录");
+                        // 清除URL中的令牌参数
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    })
+                    .catch(error => {
+                        console.error("令牌登录失败:", error);
+                    });
             }
+        }
+
+        // 初始化认证功能
+        function initializeAuth() {
+            // 获取DOM元素
+            const authButton = document.getElementById('authButton');
+            const authModal = document.getElementById('authModal');
+            const closeButton = document.querySelector('.auth-close');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            const backToLoginLink = document.getElementById('backToLoginLink');
+            const userDropdown = document.getElementById('userDropdown');
+            const userDisplayName = document.getElementById('userDisplayName');
+            const userEmail = document.getElementById('userEmail');
+            const logoutButton = document.getElementById('logoutButton');
             
-            // 3. 设置环境和初始化Paddle
-            if (useSandbox) {
-                Paddle.Environment.set('sandbox');
-                console.log('Using Paddle SANDBOX environment');
-            } else {
-                console.log('Using Paddle PRODUCTION environment');
-            }
+            // 登录相关元素
+            const loginButton = document.getElementById('loginButton');
+            const googleLoginButton = document.getElementById('googleLoginButton');
+            const loginEmail = document.getElementById('loginEmail');
+            const loginPassword = document.getElementById('loginPassword');
+            const loginError = document.getElementById('loginError');
             
-            // 初始化Paddle
-            Paddle.Initialize({
-                token: useSandbox ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
-                eventCallback: function(eventData) {
-                    console.log('Paddle event:', eventData);
-                    
-                    // 处理结账事件
-                    if (eventData.name === 'checkout.completed') {
-                        // 支付成功，处理跳转
-                        handleCheckoutCompleted(eventData.data);
-                    }
+            // 注册相关元素
+            const registerButton = document.getElementById('registerButton');
+            const googleRegisterButton = document.getElementById('googleRegisterButton');
+            const registerName = document.getElementById('registerName');
+            const registerEmail = document.getElementById('registerEmail');
+            const registerPassword = document.getElementById('registerPassword');
+            const registerError = document.getElementById('registerError');
+            
+            // 重置密码相关元素
+            const resetPasswordButton = document.getElementById('resetPasswordButton');
+            const resetEmail = document.getElementById('resetEmail');
+            const resetError = document.getElementById('resetError');
+            const resetSuccess = document.getElementById('resetSuccess');
+            
+            // 切换登录/注册表单
+            loginTab.addEventListener('click', () => {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.add('active');
+                registerForm.classList.remove('active');
+                forgotPasswordForm.classList.remove('active');
+            });
+            
+            registerTab.addEventListener('click', () => {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.add('active');
+                loginForm.classList.remove('active');
+                forgotPasswordForm.classList.remove('active');
+            });
+            
+            // 忘记密码链接
+            forgotPasswordLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.classList.remove('active');
+                registerForm.classList.remove('active');
+                forgotPasswordForm.classList.add('active');
+            });
+            
+            // 返回登录链接
+            backToLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                forgotPasswordForm.classList.remove('active');
+                loginForm.classList.add('active');
+            });
+            
+            // 打开/关闭模态框
+            authButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (firebase.auth().currentUser) {
+                    // 如果已登录，显示用户下拉菜单
+                    toggleUserDropdown();
+                } else {
+                    // 未登录，显示登录模态框
+                    authModal.style.display = 'flex';
                 }
             });
             
-            // 4. 记录当前环境，用于调试和测试
-            localStorage.setItem('aetherflow_env', useSandbox ? 'sandbox' : 'production');
+            closeButton.addEventListener('click', () => {
+                authModal.style.display = 'none';
+            });
             
-            // 如果需要在UI上显示当前环境（仅在非生产环境）
-            if (useSandbox) {
-                const envIndicator = document.createElement('div');
-                envIndicator.style.position = 'fixed';
-                envIndicator.style.bottom = '10px';
-                envIndicator.style.left = '10px';
-                envIndicator.style.padding = '5px 10px';
-                envIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                envIndicator.style.color = '#900';
-                envIndicator.style.borderRadius = '4px';
-                envIndicator.style.fontSize = '12px';
-                envIndicator.style.zIndex = '9999';
-                envIndicator.textContent = 'SANDBOX MODE';
-                document.body.appendChild(envIndicator);
+            // 点击模态框外部关闭
+            window.addEventListener('click', (e) => {
+                if (e.target === authModal) {
+                    authModal.style.display = 'none';
+                }
+                // 点击用户下拉菜单外部关闭
+                if (userDropdown.style.display === 'block' && !e.target.closest('#authButton') && !e.target.closest('#userDropdown')) {
+                    userDropdown.style.display = 'none';
+                }
+            });
+            
+            // 切换用户下拉菜单
+            function toggleUserDropdown() {
+                if (userDropdown.style.display === 'block') {
+                    userDropdown.style.display = 'none';
+                } else {
+                    // 设置用户信息
+                    const user = firebase.auth().currentUser;
+                    if (user) {
+                        userDisplayName.textContent = user.displayName || '用户';
+                        userEmail.textContent = user.email || '';
+                        
+                        // 计算下拉菜单位置
+                        const rect = authButton.getBoundingClientRect();
+                        userDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+                        userDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                        userDropdown.style.display = 'block';
+                    }
+                }
             }
+            
+            // 登录功能
+            loginButton.addEventListener('click', () => {
+                const email = loginEmail.value.trim();
+                const password = loginPassword.value;
+                
+                if (!email || !password) {
+                    loginError.textContent = 'Please enter both email and password';
+                    return;
+                }
+                
+                loginButton.disabled = true;
+                
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                    .then(() => {
+                        authModal.style.display = 'none';
+                        loginError.textContent = '';
+                        loginEmail.value = '';
+                        loginPassword.value = '';
+                    })
+                    .catch(error => {
+                        loginError.textContent = error.message;
+                    })
+                    .finally(() => {
+                        loginButton.disabled = false;
+                    });
+            });
+            
+            // Google登录
+            googleLoginButton.addEventListener('click', () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                
+                googleLoginButton.disabled = true;
+                
+                firebase.auth().signInWithPopup(provider)
+                    .then(() => {
+                        authModal.style.display = 'none';
+                    })
+                    .catch(error => {
+                        loginError.textContent = error.message;
+                    })
+                    .finally(() => {
+                        googleLoginButton.disabled = false;
+                    });
+            });
+            
+            // 注册功能
+            registerButton.addEventListener('click', () => {
+                const name = registerName.value.trim();
+                const email = registerEmail.value.trim();
+                const password = registerPassword.value;
+                
+                if (!email || !password) {
+                    registerError.textContent = 'Please enter email and password';
+                    return;
+                }
+                
+                registerButton.disabled = true;
+                
+                firebase.auth().createUserWithEmailAndPassword(email, password)
+                    .then(result => {
+                        if (name && result.user) {
+                            return result.user.updateProfile({
+                                displayName: name
+                            }).then(() => result);
+                        }
+                        return result;
+                    })
+                    .then(() => {
+                        authModal.style.display = 'none';
+                        registerError.textContent = '';
+                        registerName.value = '';
+                        registerEmail.value = '';
+                        registerPassword.value = '';
+                    })
+                    .catch(error => {
+                        registerError.textContent = error.message;
+                    })
+                    .finally(() => {
+                        registerButton.disabled = false;
+                    });
+            });
+            
+            // Google注册
+            googleRegisterButton.addEventListener('click', () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                
+                googleRegisterButton.disabled = true;
+                
+                firebase.auth().signInWithPopup(provider)
+                    .then(() => {
+                        authModal.style.display = 'none';
+                    })
+                    .catch(error => {
+                        registerError.textContent = error.message;
+                    })
+                    .finally(() => {
+                        googleRegisterButton.disabled = false;
+                    });
+            });
+            
+            // 重置密码
+            resetPasswordButton.addEventListener('click', () => {
+                const email = resetEmail.value.trim();
+                
+                if (!email) {
+                    resetError.textContent = 'Please enter your email';
+                    resetSuccess.textContent = '';
+                    return;
+                }
+                
+                resetPasswordButton.disabled = true;
+                
+                firebase.auth().sendPasswordResetEmail(email)
+                    .then(() => {
+                        resetSuccess.textContent = 'Password reset email sent. Check your inbox.';
+                        resetError.textContent = '';
+                        resetEmail.value = '';
+                    })
+                    .catch(error => {
+                        resetError.textContent = error.message;
+                        resetSuccess.textContent = '';
+                    })
+                    .finally(() => {
+                        resetPasswordButton.disabled = false;
+                    });
+            });
+            
+            // 登出功能
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                firebase.auth().signOut()
+                    .then(() => {
+                        userDropdown.style.display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Logout error:', error);
+                    });
+            });
+            
+            // 监听认证状态变化
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    // 已登录
+                    authButton.textContent = user.displayName || user.email || 'Account';
+                    authButton.classList.add('logged-in');
+                    
+                    // 更新支付按钮用户数据
+                    updatePaymentButtonsWithUserData(user);
+                } else {
+                    // 未登录
+                    authButton.textContent = 'Sign in';
+                    authButton.classList.remove('logged-in');
+                }
+            });
+            
+            // 在支付按钮中添加用户数据
+            function updatePaymentButtonsWithUserData(user) {
+                const monthlyCheckout = document.querySelector('.monthly-checkout');
+                const annualCheckout = document.querySelector('.annual-checkout');
+                
+                if (monthlyCheckout) {
+                    monthlyCheckout.setAttribute('data-user-id', user.uid);
+                    monthlyCheckout.setAttribute('data-user-email', user.email || '');
+                }
+                
+                if (annualCheckout) {
+                    annualCheckout.setAttribute('data-user-id', user.uid);
+                    annualCheckout.setAttribute('data-user-email', user.email || '');
+                }
+            }
+            
+            // 检查URL中的认证令牌
+            checkAuthTokenInUrl();
+            
+            // 修改支付按钮点击逻辑，确保用户已登录
+            const checkoutButtons = document.querySelectorAll('.monthly-checkout, .annual-checkout');
+            checkoutButtons.forEach(button => {
+                // 保存原来的点击事件处理器
+                const originalOnClick = button.onclick;
+                
+                // 替换为新的处理器
+                button.onclick = function(e) {
+                    e.preventDefault();
+                    
+                    // 检查用户是否已登录
+                    if (!firebase.auth().currentUser) {
+                        // 用户未登录，显示登录模态框
+                        authModal.style.display = 'flex';
+                        // 在模态框中添加一条消息
+                        loginError.textContent = 'Please sign in to continue with your purchase';
+                        return;
+                    }
+                    
+                    // 用户已登录，继续原来的支付流程
+                    if (originalOnClick) {
+                        originalOnClick.call(this, e);
+                    } else {
+                        // 如果没有原来的处理器，则实现默认的支付逻辑
+                        const plan = button.getAttribute('data-plan');
+                        initPaddleCheckout(plan);
+                    }
+                };
+            });
         }
-        
-        // 打开结账窗口
-        function openCheckout(planType) {
-            // 获取来源信息
-            const source = getUtmSource();
+
+        // Paddle支付处理
+        function initPaddleCheckout(plan) {
+            // 获取当前用户
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                console.error('User not authenticated');
+                return;
+            }
             
-            // 确定使用哪个价格ID
-            const priceId = getPriceIdForPlan(planType);
+            // 获取沙盒环境指示符
+            const urlParams = new URLSearchParams(window.location.search);
+            const environment = urlParams.get('env') === 'sandbox' ? 'sandbox' : 'live';
             
-            // 准备自定义数据
-            const customData = {
-                plan: planType,
-                source: source || 'website',
-                referrer: document.referrer || 'direct'
+            // 设置Paddle
+            Paddle.Environment.set(environment);
+            
+            // 设置产品ID
+            const productId = plan === 'monthly' ? 'pri_01hpxmkmvgkzfr5v5kwndwjxfa' : 'pri_01hpxmmvv13hnpsdz3fst43xq3';
+            
+            // 准备用户数据
+            const userData = {
+                userId: user.uid,
+                email: user.email,
+                plan: plan
             };
             
-            // 获取URL参数并传递
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('utm_campaign')) {
-                customData.utm_campaign = urlParams.get('utm_campaign');
-            }
-            if (urlParams.has('utm_content')) {
-                customData.utm_content = urlParams.get('utm_content');
-            }
-            
-            // 打开Paddle结账
+            // 初始化Paddle结账
             Paddle.Checkout.open({
                 items: [
                     {
-                        priceId: priceId,
+                        priceId: productId,
                         quantity: 1
                     }
                 ],
-                customData: customData,
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'light',
-                    locale: 'en',
-                    successUrl: getSuccessUrl(planType, source)
-                }
+                customer: {
+                    email: user.email
+                },
+                passthrough: JSON.stringify(userData),
+                successUrl: `${window.location.origin}/success.html?plan=${plan}&userId=${user.uid}`,
             });
         }
-        
-        // 根据计划类型获取价格ID
-        function getPriceIdForPlan(planType) {
-            // 获取当前环境
-            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-            
-            // 根据环境和计划类型返回对应的价格ID
-            if (useSandbox) {
-                // 沙盒环境的价格ID
-                return planType === 'annual' ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrw0em3kydrg4rw523w6s574';
-            } else {
-                // 生产环境的价格ID
-                return planType === 'annual' ? 'pri_01jrfcz25f4zdktr7rtt1pnzpw' : 'pri_01jrfcwajex91zya4346h9ek32';
-            }
+
+        // 切换月度/年度价格的函数
+        function showMonthly() {
+            document.querySelector('.monthly-plan').style.display = 'flex';
+            document.querySelector('.annual-plan').style.display = 'none';
+            document.querySelectorAll('.pricing-tab')[0].classList.add('active');
+            document.querySelectorAll('.pricing-tab')[1].classList.remove('active');
         }
-        
-        // 获取UTM来源
-        function getUtmSource() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('utm_source') || localStorage.getItem('aetherflow_utm_source') || null;
+
+        function showAnnual() {
+            document.querySelector('.monthly-plan').style.display = 'none';
+            document.querySelector('.annual-plan').style.display = 'flex';
+            document.querySelectorAll('.pricing-tab')[0].classList.remove('active');
+            document.querySelectorAll('.pricing-tab')[1].classList.add('active');
         }
-        
-        // 构建成功URL
-        function getSuccessUrl(planType, source) {
-            // 获取基础URL
-            let baseUrl;
+
+        // 处理FAQ折叠
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            const answer = item.querySelector('.faq-answer');
+            const toggle = item.querySelector('.faq-toggle');
             
-            // 检查环境
-            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-            
-            // 如果是localhost，使用相对路径
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                baseUrl = '/success.html';
-            } else {
-                // 使用完整URL
-                baseUrl = window.location.origin + '/success.html';
-            }
-            
-            // 构建URL参数
-            const params = new URLSearchParams();
-            params.set('plan', planType);
-            if (source) {
-                params.set('source', source);
-            }
-            
-            // 添加环境参数（仅在沙盒环境）
-            if (useSandbox) {
-                params.set('env', 'sandbox');
-            }
-            
-            return baseUrl + '?' + params.toString();
-        }
-        
-        // 处理结账完成事件
-        function handleCheckoutCompleted(data) {
-            console.log('Checkout completed:', data);
-            
-            // 从事件数据中获取信息
-            const checkoutId = data.checkout?.id;
-            const planType = data.items?.[0]?.price?.productType || 'monthly';
-            
-            // 构建跳转URL
-            let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
-            
-            // 跳转到成功页面
-            window.location.href = redirectUrl;
-        }
-        
-        // 保存UTM来源到localStorage（如果存在）
-        function saveUtmParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('utm_source')) {
-                localStorage.setItem('aetherflow_utm_source', urlParams.get('utm_source'));
-            }
-            if (urlParams.has('utm_campaign')) {
-                localStorage.setItem('aetherflow_utm_campaign', urlParams.get('utm_campaign'));
-            }
-        }
-        
-        // 在页面加载时保存UTM参数
-        saveUtmParameters();
+            question.addEventListener('click', () => {
+                const expanded = item.classList.contains('expanded');
+                
+                // 关闭所有其他FAQ项
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('expanded');
+                        otherItem.querySelector('.faq-toggle').textContent = '+';
+                    }
+                });
+                
+                // 切换当前项
+                if (expanded) {
+                    item.classList.remove('expanded');
+                    toggle.textContent = '+';
+                } else {
+                    item.classList.add('expanded');
+                    toggle.textContent = '-';
+                }
+            });
+        });
     </script>
 </body>
 </html> 
