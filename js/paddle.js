@@ -187,24 +187,24 @@ function getSuccessUrl(planType, source) {
 
 // 处理结账完成事件
 function handleCheckoutCompleted(data) {
-    console.log('Checkout completed event received:', data);
+    console.log('Checkout completed:', data);
     
-    // 从事件数据中获取信息 (这段代码现在可能不再需要，因为依赖 successUrl)
-    // const checkoutId = data.checkout?.id;
-    // const planType = data.custom_data?.plan || (data.items?.[0]?.price?.type === 'recurring' ? 'monthly' : 'annual');
+    // 从事件数据中获取信息
+    const checkoutId = data.checkout?.id;
+    // Paddle 返回的 productType 可能是 'standard' 或 'recurring'，这里用 planType 更合适
+    const planType = data.custom_data?.plan || (data.items?.[0]?.price?.type === 'recurring' ? 'monthly' : 'annual');
     
-    // 构建跳转URL (这段代码现在可能不再需要)
-    // let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
+    // 构建跳转URL
+    let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
     
-    // 添加环境参数（如果需要）(这段代码现在可能不再需要)
-    // const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-    // if (useSandbox) {
-    //     redirectUrl += '&env=sandbox';
-    // }
+    // 添加环境参数（如果需要）
+    const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
+    if (useSandbox) {
+        redirectUrl += '&env=sandbox';
+    }
     
-    // 跳转到成功页面 (注释掉或删除这行，依赖 successUrl 设置)
-    // window.location.href = redirectUrl;
-    console.log('Paddle checkout.completed event handled. Relying on successUrl for redirect.');
+    // 跳转到成功页面
+    window.location.href = redirectUrl;
 }
 
 // 保存UTM来源到localStorage（如果存在）
