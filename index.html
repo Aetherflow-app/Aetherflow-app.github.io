@@ -456,6 +456,9 @@
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
         
+        // 设置持久化，确保在浏览器重启后仍保持登录状态
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        
         // 认证UI配置
         const uiConfig = {
             signInFlow: 'popup',
@@ -549,6 +552,29 @@
             authModal.classList.remove('active');
         }
         
+        // 获取认证令牌
+        function getAuthTokenFromStorage() {
+            try {
+                return localStorage.getItem('aetherflow_auth_token');
+            } catch (e) {
+                console.error("无法从存储中读取令牌:", e);
+                return null;
+            }
+        }
+        
+        // 保存认证令牌到存储
+        function saveAuthTokenToStorage(token) {
+            try {
+                if (token) {
+                    localStorage.setItem('aetherflow_auth_token', token);
+                    // 设置30天过期
+                    localStorage.setItem('aetherflow_auth_expires', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                }
+            } catch (e) {
+                console.error("无法保存令牌到存储:", e);
+            }
+        }
+        
         // 更新认证UI
         function updateAuthUI(user) {
             const signInBtn = document.getElementById('sign-in-btn');
@@ -570,15 +596,19 @@
                 
                 userName.textContent = user.displayName || user.email.split('@')[0];
                 
-                // 获取认证令牌
+                // 获取并保存认证令牌
                 user.getIdToken().then(function(token) {
                     authToken = token;
+                    saveAuthTokenToStorage(token);
                 });
             } else {
                 // 用户未登录
                 signInBtn.style.display = 'block';
                 userMenu.style.display = 'none';
                 authToken = '';
+                // 清除存储的令牌
+                localStorage.removeItem('aetherflow_auth_token');
+                localStorage.removeItem('aetherflow_auth_expires');
             }
         }
         
@@ -586,18 +616,87 @@
         function checkAuthTokenInUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
+            const uid = urlParams.get('uid');
+            const timestamp = urlParams.get('ts');
             
-            if (token) {
-                // 使用令牌登录
-                firebase.auth().signInWithCustomToken(token)
-                    .then(() => {
-                        // 清除URL参数
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    })
-                    .catch(error => {
-                        console.error("认证失败:", error);
-                    });
+            // 如果URL中有令牌，使用该令牌登录
+            if (token && uid && timestamp) {
+                // 检查令牌是否在短时间内生成（如10分钟内）
+                const now = Date.now();
+                const tokenTime = parseInt(timestamp);
+                const timeDiff = now - tokenTime;
+                
+                // 如果令牌超过10分钟，则不处理
+                if (timeDiff > 600000) {
+                    console.log("认证令牌已过期");
+                    tryLoginWithStorage();
+                    return;
+                }
+                
+                // 使用idToken直接登录
+                firebase.auth().signInWithCredential(
+                    firebase.auth.GoogleAuthProvider.credential(token)
+                )
+                .then(() => {
+                    // 清除URL参数
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    console.log("通过扩展令牌成功登录");
+                })
+                .catch(error => {
+                    console.error("认证失败:", error);
+                    // 如果直接登录失败，尝试使用idToken验证
+                    verifyIdTokenAndLogin(token, uid);
+                });
+            } else {
+                // URL中没有令牌，尝试从localStorage恢复
+                tryLoginWithStorage();
             }
+        }
+        
+        // 尝试使用存储的令牌登录
+        function tryLoginWithStorage() {
+            // 检查是否已经登录
+            if (firebase.auth().currentUser) {
+                return;
+            }
+            
+            // 尝试从存储中获取令牌
+            const storedToken = getAuthTokenFromStorage();
+            const expireTime = localStorage.getItem('aetherflow_auth_expires');
+            
+            if (storedToken && expireTime && Date.now() < parseInt(expireTime)) {
+                // 令牌存在且未过期，尝试自动登录
+                console.log("尝试使用存储的令牌自动登录");
+                
+                // 这里我们不直接使用令牌登录，而是让Firebase检查其缓存的认证状态
+                // Firebase会自动处理认证状态的恢复
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (!user) {
+                        console.log("存储的认证已过期，需要重新登录");
+                    }
+                });
+            }
+        }
+        
+        // 使用idToken验证并登录
+        function verifyIdTokenAndLogin(idToken, uid) {
+            // 创建临时登录凭证
+            const credential = firebase.auth.PhoneAuthProvider.credential(
+                uid, idToken.substring(0, 32)
+            );
+            
+            // 尝试使用凭证登录
+            firebase.auth().signInWithCredential(credential)
+                .then(userCredential => {
+                    console.log("用户已成功登录:", userCredential.user.uid);
+                    // 清除URL参数
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                })
+                .catch(error => {
+                    console.error("无法验证令牌:", error);
+                    // 登录失败时显示登录框
+                    openAuthModal();
+                });
         }
     </script>
 </body>
