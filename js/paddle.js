@@ -76,14 +76,24 @@ function initializePaddle() {
 
 // 打开结账窗口
 function openCheckout(planType) {
+    // 获取当前已验证的用户
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+        console.error('尝试支付时用户未登录或认证状态丢失');
+        // 理论上 handleCheckoutButtonClick 已经处理了未登录情况，这里是最后防线
+        showAuthModal(); // 再次提示登录
+        return;
+    }
+    
     // 获取来源信息
     const source = getUtmSource();
     
     // 确定使用哪个价格ID
     const priceId = getPriceIdForPlan(planType);
     
-    // 准备自定义数据
+    // 准备自定义数据，确保包含已验证的 userId
     const customData = {
+        userId: currentUser.uid, // **关键：传递已验证的用户ID**
         plan: planType,
         source: source || 'website',
         referrer: document.referrer || 'direct'
@@ -98,6 +108,8 @@ function openCheckout(planType) {
         customData.utm_content = urlParams.get('utm_content');
     }
     
+    console.log('Opening Paddle Checkout with data:', { priceId, customData });
+    
     // 打开Paddle结账
     Paddle.Checkout.open({
         items: [
@@ -106,6 +118,9 @@ function openCheckout(planType) {
                 quantity: 1
             }
         ],
+        customer: {
+             email: currentUser.email || '' // 预填邮箱
+        },
         customData: customData,
         settings: {
             displayMode: 'overlay',

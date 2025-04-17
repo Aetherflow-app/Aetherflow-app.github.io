@@ -17,8 +17,8 @@ function initFirebase() {
         firebase.initializeApp(firebaseConfig);
     }
     
-    // 检查URL中是否有认证令牌
-    checkForAuthToken();
+    // 处理来自URL的ID令牌 (替换旧的 checkForAuthToken)
+    handleIdTokenFromUrl(); 
     
     // 监听认证状态变化
     firebase.auth().onAuthStateChanged(handleAuthStateChanged);
@@ -414,33 +414,89 @@ function signInWithGoogle() {
         });
 }
 
-// 检查URL中的认证令牌 (这个函数同时使用了UI Toast函数，按计划应该分离，但为了原子性，先一起移动)
-function checkForAuthToken() {
+// 检查URL中的ID令牌并尝试使用后端进行认证
+function handleIdTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    const idToken = urlParams.get('idToken');
     
-    if (token) {
-        // 显示加载状态提示
-        showAuthLoadingToast();
+    if (idToken) {
+        // 显示加载状态提示 (依赖 ui.js)
+        if (typeof showAuthLoadingToast === 'function') {
+            showAuthLoadingToast("正在从扩展同步登录...");
+        } else {
+            console.log("正在同步登录...");
+        }
+
+        // 定义后端端点URL (已更新为实际URL)
+        const customTokenEndpoint = 'https://create-custom-token-423266303314.us-west4.run.app/api/create-custom-token'; 
         
-        // 使用令牌登录
-        firebase.auth().signInWithCustomToken(token)
-            .then(() => {
-                // 登录成功
-                showAuthSuccessToast();
-                
-                // 清除URL参数，但保留其他参数
-                const newParams = new URLSearchParams(window.location.search);
-                newParams.delete('token');
-                const newUrl = newParams.toString() 
-                  ? `${window.location.pathname}?${newParams.toString()}`
-                  : window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
-            })
-            .catch((error) => {
-                console.error('令牌登录失败:', error);
-                showAuthErrorToast(error.message);
-            });
+        // 调用后端函数获取 Custom Token
+        fetch(customTokenEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ idToken: idToken })
+        })
+        .then(response => {
+            if (!response.ok) {
+                // 如果HTTP状态码不是2xx，抛出错误，包含状态文本
+                return response.text().then(text => { 
+                    throw new Error(`后端错误 ${response.status}: ${text || response.statusText}`); 
+                });
+            }
+            return response.json(); // 解析JSON响应体
+        })
+        .then(data => {
+            if (data && data.customToken) {
+                // 使用获取到的 Custom Token 登录 Firebase
+                firebase.auth().signInWithCustomToken(data.customToken)
+                    .then(() => {
+                        // 登录成功
+                         if (typeof showAuthSuccessToast === 'function') {
+                            showAuthSuccessToast();
+                         } else {
+                            console.log("登录成功!");
+                         }
+                        
+                        // 清除URL中的idToken参数，保留其他参数
+                        const newParams = new URLSearchParams(window.location.search);
+                        newParams.delete('idToken');
+                        const newUrl = newParams.toString() 
+                          ? `${window.location.pathname}?${newParams.toString()}`
+                          : window.location.pathname;
+                        window.history.replaceState({}, document.title, newUrl);
+                    })
+                    .catch((error) => {
+                        // Custom Token 登录失败
+                        console.error('Firebase Custom Token 登录失败:', error);
+                         if (typeof showAuthErrorToast === 'function') {
+                            showAuthErrorToast(`登录失败: ${error.code}`);
+                         } else {
+                            alert(`登录失败: ${error.message}`);
+                         }
+                    });
+            } else {
+                // 后端返回的数据格式不正确
+                throw new Error('从后端接收到的令牌格式不正确');
+            }
+        })
+        .catch((error) => {
+            // 网络错误或后端处理错误
+            console.error('调用后端获取 Custom Token 失败:', error);
+             if (typeof showAuthErrorToast === 'function') {
+                showAuthErrorToast(`同步登录失败: ${error.message}`);
+             } else {
+                alert(`同步登录失败: ${error.message}`);
+             }
+            // 可选：也清除URL中的idToken，避免重复尝试
+             const newParams = new URLSearchParams(window.location.search);
+             newParams.delete('idToken');
+             const newUrl = newParams.toString() 
+               ? `${window.location.pathname}?${newParams.toString()}`
+               : window.location.pathname;
+             window.history.replaceState({}, document.title, newUrl);
+        });
     }
 }
 
