@@ -149,13 +149,6 @@
                     <p class="zh" style="display:none;">方案：<span id="plan-type-zh">月度</span></p>
                 </div>
                 
-                <!-- 添加认证状态测试区域 -->
-                <div class="auth-test" style="margin-top: 20px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;">
-                    <p class="en">Auth Status: <span id="auth-status">Checking...</span></p>
-                    <p class="zh" style="display:none;">认证状态：<span id="auth-status-zh">检查中...</span></p>
-                    <button id="check-auth-btn" class="btn btn-outline" style="margin-top: 10px;" onclick="checkAuthStatus()">Check Auth Status</button>
-                </div>
-                
                 <div class="cta-buttons">
                     <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn" class="btn btn-primary en">Open AetherFlow</a>
                     <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn-zh" class="btn btn-primary zh" style="display:none;">打开AetherFlow</a>
@@ -241,9 +234,6 @@
             
             // 应用保存的语言偏好
             applyLanguagePreference();
-            
-            // 等待认证服务初始化后检查状态
-            setTimeout(checkAuthStatus, 1000);
         });
         
         // 处理支付成功逻辑
@@ -429,34 +419,6 @@
                     });
                 }
             });
-        }
-        
-        // 检查认证状态函数
-        function checkAuthStatus() {
-            const statusEl = document.getElementById('auth-status');
-            const statusElZh = document.getElementById('auth-status-zh');
-            
-            if (window.authService) {
-                if (window.authService.isAuthenticated()) {
-                    const user = window.authService.getCurrentUser();
-                    const userInfo = `Logged in as: ${user.email || '(no email)'} (${user.uid})`;
-                    
-                    if (statusEl) statusEl.textContent = userInfo;
-                    if (statusElZh) statusElZh.textContent = `已登录: ${user.email || '(无邮箱)'} (${user.uid})`;
-                    
-                    console.log('当前用户信息:', user);
-                } else {
-                    if (statusEl) statusEl.textContent = 'Not logged in';
-                    if (statusElZh) statusElZh.textContent = '未登录';
-                    
-                    console.log('未登录状态');
-                }
-            } else {
-                if (statusEl) statusEl.textContent = 'Auth service not available';
-                if (statusElZh) statusElZh.textContent = '认证服务不可用';
-                
-                console.log('认证服务不可用');
-            }
         }
     </script>
 </body>

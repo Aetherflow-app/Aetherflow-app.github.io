@@ -3,37 +3,19 @@
 
 // 初始化UI
 document.addEventListener('DOMContentLoaded', () => {
-  // 等待authService初始化
-  initializeAuthUI();
-});
-
-// 初始化认证UI
-function initializeAuthUI() {
-  // 检查authService是否可用
-  if (window.authService) {
-    startUI();
-  } else {
-    // 如果authService不可用，等待100ms后重试
-    console.log('等待认证服务初始化...');
-    setTimeout(initializeAuthUI, 100);
-  }
-}
-
-// 启动UI
-function startUI() {
-  console.log('认证UI开始初始化');
-  
   // 注册用户登录状态变化监听器
-  window.authService.onAuthStateChanged(updateUIForUser);
+  if (window.authService) {
+    window.authService.onAuthStateChanged(updateUIForUser);
+  } else {
+    console.error('认证服务未找到，UI组件无法初始化');
+  }
   
   // 创建认证UI结构
   createAuthUIElements();
   
   // 绑定事件处理
   bindAuthUIEvents();
-  
-  console.log('认证UI初始化完成');
-}
+});
 
 // 创建认证UI元素 (模态框和用户菜单)
 function createAuthUIElements() {
