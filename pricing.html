@@ -24,17 +24,34 @@
         /* 认证相关样式 */
         .auth-btn {
             background: transparent;
-            border: 1px solid #4A90E2;
-            color: #4A90E2;
+            border: none;
+            color: #576CBC;
             padding: 8px 15px;
             border-radius: 4px;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-weight: 500;
+            margin-top: -1px; /* 微调垂直对齐 */
         }
         
         .auth-btn:hover {
-            background: rgba(74, 144, 226, 0.1);
+            color: #19A7CE;
+            background: rgba(25, 167, 206, 0.05);
+        }
+        
+        /* 修复导航与认证按钮的对齐 */
+        .auth-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            margin-left: 10px;
+        }
+        
+        /* 当在Pricing页面时的按钮样式 */
+        .pricing-page .auth-btn {
+            background: rgba(87, 108, 188, 0.1);
+            padding: 8px 16px;
         }
         
         .user-menu {
@@ -141,7 +158,7 @@
         }
     </style>
 </head>
-<body>
+<body class="pricing-page">
     <header>
         <div class="container">
             <div class="logo">
@@ -435,7 +452,7 @@
     </footer>
 
     <!-- 认证模态框 -->
-    <div id="auth-modal" class="auth-modal">
+    <div id="auth-modal" class="auth-modal" style="display: none;">
         <div class="auth-container">
             <button id="auth-close" class="auth-close">&times;</button>
             <h3 class="auth-title">Sign in to AetherFlow</h3>
@@ -699,6 +716,7 @@
 
     <!-- 添加认证脚本 -->
     <script>
+        console.log("页面加载完成，开始初始化认证系统");
         // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
@@ -738,6 +756,8 @@
         
         // 初始化UI组件
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("初始化认证系统");
+            
             // 获取UI元素
             const signInBtn = document.getElementById('sign-in-btn');
             const userMenu = document.getElementById('user-menu');
@@ -748,39 +768,57 @@
             const authModal = document.getElementById('auth-modal');
             const authClose = document.getElementById('auth-close');
             
+            console.log("登录按钮元素:", signInBtn);
+            console.log("用户菜单元素:", userMenu);
+            console.log("模态框元素:", authModal);
+            
             // 检查URL参数中是否有认证令牌
             checkAuthTokenInUrl();
             
             // 初始化Firebase UI
             ui = new firebaseui.auth.AuthUI(firebase.auth());
+            console.log("Firebase初始化成功");
             
             // 设置按钮事件
-            signInBtn.addEventListener('click', function() {
-                openAuthModal();
-            });
-            
-            userMenu.addEventListener('click', function(e) {
-                userDropdown.classList.toggle('active');
-                e.stopPropagation();
-            });
-            
-            signOutBtn.addEventListener('click', function() {
-                firebase.auth().signOut().then(() => {
-                    updateAuthUI();
-                    userDropdown.classList.remove('active');
+            if (signInBtn) {
+                signInBtn.addEventListener('click', function(e) {
+                    console.log("登录按钮被点击");
+                    e.preventDefault();
+                    openAuthModal();
                 });
-            });
+                console.log("登录按钮事件已绑定");
+            } else {
+                console.error("登录按钮元素不存在!");
+            }
             
-            authClose.addEventListener('click', function() {
-                closeAuthModal();
-            });
+            if (userMenu) {
+                userMenu.addEventListener('click', function(e) {
+                    userDropdown.classList.toggle('active');
+                    e.stopPropagation();
+                });
+            }
+            
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', function() {
+                    firebase.auth().signOut().then(() => {
+                        updateAuthUI();
+                        userDropdown.classList.remove('active');
+                    });
+                });
+            }
+            
+            if (authClose) {
+                authClose.addEventListener('click', function() {
+                    closeAuthModal();
+                });
+            }
             
             document.addEventListener('click', function(e) {
-                if (userDropdown.classList.contains('active') && !userMenu.contains(e.target)) {
+                if (userDropdown && userDropdown.classList.contains('active') && !userMenu.contains(e.target)) {
                     userDropdown.classList.remove('active');
                 }
                 
-                if (authModal.classList.contains('active') && !authModal.querySelector('.auth-container').contains(e.target)) {
+                if (authModal && authModal.classList.contains('active') && authModal.querySelector('.auth-container') && !authModal.querySelector('.auth-container').contains(e.target)) {
                     closeAuthModal();
                 }
             });
@@ -790,19 +828,27 @@
                 updateAuthUI(user);
             });
             
+            console.log("FirebaseUI初始化成功");
+            
             // 修改购买按钮点击事件
+            console.log("设置购买按钮的登录检查");
             const checkoutButtons = document.querySelectorAll('.monthly-checkout, .annual-checkout');
+            console.log("找到的购买按钮:", checkoutButtons.length);
+            
             checkoutButtons.forEach(button => {
                 const originalClick = button.onclick;
                 button.onclick = function(e) {
                     e.preventDefault();
+                    console.log("购买按钮被点击");
                     
                     // 检查用户是否已登录
                     const user = firebase.auth().currentUser;
                     if (!user) {
+                        console.log("用户未登录，显示登录界面");
                         // 未登录，显示登录界面
                         openAuthModal();
                     } else {
+                        console.log("用户已登录，继续支付流程");
                         // 已登录，继续支付流程
                         if (typeof originalClick === 'function') {
                             originalClick.call(this);
@@ -814,16 +860,33 @@
         
         // 打开认证模态框
         function openAuthModal() {
+            console.log("打开认证模态框函数被调用");
             const authModal = document.getElementById('auth-modal');
+            console.log("模态框元素:", authModal);
+            
+            if (!authModal) {
+                console.error("找不到auth-modal元素!");
+                return;
+            }
+            
+            authModal.style.display = 'flex';
             authModal.classList.add('active');
+            
+            console.log("模态框类列表:", authModal.classList);
+            console.log("模态框样式display:", authModal.style.display);
             
             // 启动Firebase UI
             ui.start('#firebaseui-auth-container', uiConfig);
+            console.log("FirebaseUI已启动");
         }
         
         // 关闭认证模态框
         function closeAuthModal() {
+            console.log("关闭认证模态框");
             const authModal = document.getElementById('auth-modal');
+            if (!authModal) return;
+            
+            authModal.style.display = 'none';
             authModal.classList.remove('active');
         }
         
