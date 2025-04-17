@@ -223,6 +223,33 @@
             // 应用保存的语言偏好
             applyLanguagePreference();
             
+            // 初始化Firebase
+            if (typeof firebase !== 'undefined') {
+                // 配置并初始化Firebase
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+                    authDomain: "aetherflow-b6459.firebaseapp.com",
+                    projectId: "aetherflow-b6459",
+                    storageBucket: "aetherflow-b6459.firebasestorage.app",
+                    messagingSenderId: "423266303314",
+                    appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+                    measurementId: "G-ZD5E2WY22N"
+                };
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                // 监听认证状态变化
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (user) {
+                        console.log('已登录用户:', user.email);
+                    } else {
+                        console.log('用户未登录');
+                    }
+                });
+            }
+            
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
@@ -299,33 +326,130 @@
         // 尝试与扩展通信，通知支付成功
         function communicateWithExtension(checkoutId, planType) {
             try {
-                // 使用Chrome扩展消息机制
-                const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
-                
-                // 准备消息数据
-                const messageData = {
-                    type: 'PAYMENT_SUCCESS',
-                    checkoutId: checkoutId,
-                    planType: planType || 'monthly',
-                    timestamp: Date.now()
-                };
-                
-                console.log('Attempting to communicate with extension:', messageData);
-                
-                // 尝试发送消息到扩展
-                if (typeof chrome !== 'undefined' && chrome.runtime) {
-                    chrome.runtime.sendMessage(extensionId, messageData, function(response) {
-                        if (chrome.runtime.lastError) {
-                            console.log('Failed to communicate with extension:', chrome.runtime.lastError);
-                        } else {
-                            console.log('Successfully communicated with extension:', response);
-                        }
-                    });
-                } else {
-                    console.log('Chrome API not available. Data saved to localStorage for later retrieval.');
+                // 确保 Firebase 已经初始化
+                if (typeof firebase === 'undefined' || !firebase.auth) {
+                    console.error('Firebase未初始化，无法验证用户');
+                    updateStatusMessage('认证服务不可用，请重新打开扩展检查会员状态');
+                    
+                    // 保存到localStorage作为备份
+                    savePaymentDataToLocalStorage(checkoutId, planType);
+                    return;
                 }
+                
+                // 获取当前用户
+                const currentUser = firebase.auth().currentUser;
+                if (!currentUser) {
+                    console.log('用户未登录，尝试从localStorage恢复用户信息');
+                    const storedUser = localStorage.getItem('aetherflow_user');
+                    
+                    if (storedUser) {
+                        try {
+                            const userData = JSON.parse(storedUser);
+                            console.log('从localStorage获取用户信息:', userData);
+                            sendMessageToExtension(checkoutId, planType, userData);
+                        } catch (e) {
+                            console.error('解析存储的用户信息失败:', e);
+                            updateStatusMessage('无法获取用户信息，请在扩展中登录后检查会员状态');
+                            savePaymentDataToLocalStorage(checkoutId, planType);
+                        }
+                    } else {
+                        console.log('未找到用户信息，保存支付数据等待稍后处理');
+                        updateStatusMessage('未检测到登录状态，请在扩展中登录后会员状态将自动更新');
+                        savePaymentDataToLocalStorage(checkoutId, planType);
+                    }
+                    return;
+                }
+                
+                // 用户已登录，发送消息
+                sendMessageToExtension(checkoutId, planType, {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName
+                });
             } catch (error) {
-                console.error('Error communicating with extension:', error);
+                console.error('与扩展通信失败:', error);
+                updateStatusMessage('与扩展通信失败，请稍后在扩展中检查会员状态');
+                savePaymentDataToLocalStorage(checkoutId, planType);
+            }
+        }
+        
+        // 向扩展发送消息
+        function sendMessageToExtension(checkoutId, planType, userData) {
+            // 获取环境
+            const urlParams = new URLSearchParams(window.location.search);
+            const envParam = urlParams.get('env');
+            const environment = envParam || localStorage.getItem('aetherflow_env') || 'production';
+            
+            // 使用Chrome扩展消息机制
+            const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+            
+            // 准备消息数据
+            const messageData = {
+                type: 'PAYMENT_SUCCESS',
+                checkoutId: checkoutId,
+                planType: planType || 'monthly',
+                environment: environment,
+                timestamp: Date.now(),
+                user: userData // 包含用户信息
+            };
+            
+            console.log('发送消息到扩展:', messageData);
+            
+            // 尝试发送消息到扩展
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage(extensionId, messageData, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log('发送消息到扩展失败:', chrome.runtime.lastError);
+                        updateStatusMessage('与扩展通信失败，请稍后在扩展中检查会员状态');
+                        savePaymentDataToLocalStorage(checkoutId, planType);
+                    } else if (response && response.success) {
+                        console.log('成功与扩展通信:', response);
+                        updateStatusMessage('支付成功！会员状态已更新');
+                        // 成功后可以清除本地存储的支付数据
+                        clearSavedPaymentData();
+                    } else {
+                        console.log('扩展返回错误:', response);
+                        const errorMessage = response?.error === 'USER_NOT_AUTHENTICATED' 
+                            ? '用户未登录，请在扩展中登录后会员状态将自动更新'
+                            : '更新会员状态失败，请在扩展中检查';
+                        updateStatusMessage(errorMessage);
+                        savePaymentDataToLocalStorage(checkoutId, planType);
+                    }
+                });
+            } else {
+                console.log('Chrome API不可用，保存到localStorage等待稍后处理');
+                updateStatusMessage('浏览器扩展无法访问，请打开扩展继续');
+                savePaymentDataToLocalStorage(checkoutId, planType);
+            }
+        }
+        
+        // 保存支付数据到本地存储
+        function savePaymentDataToLocalStorage(checkoutId, planType) {
+            localStorage.setItem('aetherflow_payment_success', 'true');
+            localStorage.setItem('aetherflow_checkout_id', checkoutId);
+            localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
+            console.log('支付数据已保存到本地存储，扩展启动时将检查并处理');
+        }
+        
+        // 清除本地存储的支付数据
+        function clearSavedPaymentData() {
+            localStorage.removeItem('aetherflow_payment_success');
+            localStorage.removeItem('aetherflow_checkout_id');
+            localStorage.removeItem('aetherflow_plan_type');
+            console.log('本地存储的支付数据已清除');
+        }
+        
+        // 更新状态消息
+        function updateStatusMessage(message) {
+            const statusElement = document.getElementById('status');
+            const statusElementZh = document.querySelector('.success-message.zh');
+            
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+            
+            if (statusElementZh) {
+                statusElementZh.textContent = message;
             }
         }
         
