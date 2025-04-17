@@ -8,6 +8,153 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase UI -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+    
+    <!-- 自定义认证CSS -->
+    <style>
+        /* 认证相关样式 */
+        .auth-btn {
+            background: transparent;
+            border: none;
+            color: #576CBC;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            margin-top: -1px; /* 微调垂直对齐 */
+        }
+        
+        .auth-btn:hover {
+            color: #19A7CE;
+            background: rgba(25, 167, 206, 0.05);
+        }
+        
+        /* 修复导航与认证按钮的对齐 */
+        .auth-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            margin-left: 10px;
+        }
+        
+        /* 当在Pricing页面时的按钮样式 */
+        .pricing-page .auth-btn {
+            background: rgba(87, 108, 188, 0.1);
+            padding: 8px 16px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4A90E2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .user-dropdown.active {
+            display: block;
+        }
+        
+        .user-dropdown a, .user-dropdown button {
+            display: block;
+            padding: 8px 15px;
+            text-align: left;
+            width: 100%;
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .user-dropdown a:hover, .user-dropdown button:hover {
+            background: #f5f5f5;
+        }
+        
+        /* 模态框样式 */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auth-modal.active {
+            display: flex;
+        }
+        
+        .auth-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .auth-title {
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .firebase-ui-container {
+            min-height: 250px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -23,6 +170,16 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
+                    <li id="auth-section" class="auth-section">
+                        <button id="sign-in-btn" class="auth-btn">Sign in</button>
+                        <div id="user-menu" class="user-menu" style="display: none;">
+                            <div id="user-avatar" class="user-avatar">U</div>
+                            <span id="user-name">User</span>
+                            <div id="user-dropdown" class="user-dropdown">
+                                <button id="sign-out-btn">Sign out</button>
+                            </div>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -288,6 +445,315 @@
             const videoContainer = document.querySelector('.video-container');
             // 替换视频容器内容为YouTube嵌入式播放器
             videoContainer.innerHTML = '<div class="embed-responsive"><iframe width="100%" height="450" src="https://www.youtube.com/embed/vSwZ517-0Wg?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+        }
+    </script>
+
+    <!-- 认证模态框 -->
+    <div id="auth-modal" class="auth-modal" style="display: none;">
+        <div class="auth-container">
+            <button id="auth-close" class="auth-close">&times;</button>
+            <h3 class="auth-title">Sign in to AetherFlow</h3>
+            <div id="firebaseui-auth-container" class="firebase-ui-container"></div>
+        </div>
+    </div>
+
+    <!-- 添加认证脚本 -->
+    <script>
+        console.log("页面加载完成，开始初始化认证系统");
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+            authDomain: "aetherflow-b6459.firebaseapp.com",
+            projectId: "aetherflow-b6459",
+            storageBucket: "aetherflow-b6459.firebasestorage.app",
+            messagingSenderId: "423266303314",
+            appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+            measurementId: "G-ZD5E2WY22N"
+        };
+        
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // 设置持久化，确保在浏览器重启后仍保持登录状态
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        
+        // 认证UI配置
+        const uiConfig = {
+            signInFlow: 'popup',
+            signInOptions: [
+                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                firebase.auth.EmailAuthProvider.PROVIDER_ID
+            ],
+            callbacks: {
+                signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                    // 登录成功后更新UI，不重定向
+                    updateAuthUI();
+                    closeAuthModal();
+                    return false;
+                }
+            },
+            tosUrl: 'terms-of-service.html',
+            privacyPolicyUrl: 'privacy-policy.html'
+        };
+        
+        // 初始化变量
+        let ui;
+        let authToken = '';
+        
+        // 初始化UI组件
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("初始化认证系统");
+            
+            // 获取UI元素
+            const signInBtn = document.getElementById('sign-in-btn');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            const userDropdown = document.getElementById('user-dropdown');
+            const signOutBtn = document.getElementById('sign-out-btn');
+            const authModal = document.getElementById('auth-modal');
+            const authClose = document.getElementById('auth-close');
+            
+            console.log("登录按钮元素:", signInBtn);
+            console.log("用户菜单元素:", userMenu);
+            console.log("模态框元素:", authModal);
+            
+            // 检查URL参数中是否有认证令牌
+            checkAuthTokenInUrl();
+            
+            // 初始化Firebase UI
+            ui = new firebaseui.auth.AuthUI(firebase.auth());
+            console.log("Firebase初始化成功");
+            
+            // 设置按钮事件
+            if (signInBtn) {
+                signInBtn.addEventListener('click', function(e) {
+                    console.log("登录按钮被点击");
+                    e.preventDefault();
+                    openAuthModal();
+                });
+                console.log("登录按钮事件已绑定");
+            } else {
+                console.error("登录按钮元素不存在!");
+            }
+            
+            if (userMenu) {
+                userMenu.addEventListener('click', function(e) {
+                    userDropdown.classList.toggle('active');
+                    e.stopPropagation();
+                });
+            }
+            
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', function() {
+                    firebase.auth().signOut().then(() => {
+                        updateAuthUI();
+                        userDropdown.classList.remove('active');
+                    });
+                });
+            }
+            
+            if (authClose) {
+                authClose.addEventListener('click', function() {
+                    closeAuthModal();
+                });
+            }
+            
+            document.addEventListener('click', function(e) {
+                if (userDropdown && userDropdown.classList.contains('active') && !userMenu.contains(e.target)) {
+                    userDropdown.classList.remove('active');
+                }
+                
+                if (authModal && authModal.classList.contains('active') && authModal.querySelector('.auth-container') && !authModal.querySelector('.auth-container').contains(e.target)) {
+                    closeAuthModal();
+                }
+            });
+            
+            // 监听认证状态变化
+            firebase.auth().onAuthStateChanged(function(user) {
+                updateAuthUI(user);
+            });
+            
+            console.log("FirebaseUI初始化成功");
+        });
+        
+        // 打开认证模态框
+        function openAuthModal() {
+            console.log("打开认证模态框函数被调用");
+            const authModal = document.getElementById('auth-modal');
+            console.log("模态框元素:", authModal);
+            
+            if (!authModal) {
+                console.error("找不到auth-modal元素!");
+                return;
+            }
+            
+            authModal.style.display = 'flex';
+            authModal.classList.add('active');
+            
+            console.log("模态框类列表:", authModal.classList);
+            console.log("模态框样式display:", authModal.style.display);
+            
+            // 启动Firebase UI
+            ui.start('#firebaseui-auth-container', uiConfig);
+            console.log("FirebaseUI已启动");
+        }
+        
+        // 关闭认证模态框
+        function closeAuthModal() {
+            console.log("关闭认证模态框");
+            const authModal = document.getElementById('auth-modal');
+            if (!authModal) return;
+            
+            authModal.style.display = 'none';
+            authModal.classList.remove('active');
+        }
+        
+        // 获取认证令牌
+        function getAuthTokenFromStorage() {
+            try {
+                return localStorage.getItem('aetherflow_auth_token');
+            } catch (e) {
+                console.error("无法从存储中读取令牌:", e);
+                return null;
+            }
+        }
+        
+        // 保存认证令牌到存储
+        function saveAuthTokenToStorage(token) {
+            try {
+                if (token) {
+                    localStorage.setItem('aetherflow_auth_token', token);
+                    // 设置30天过期
+                    localStorage.setItem('aetherflow_auth_expires', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                }
+            } catch (e) {
+                console.error("无法保存令牌到存储:", e);
+            }
+        }
+        
+        // 更新认证UI
+        function updateAuthUI(user) {
+            const signInBtn = document.getElementById('sign-in-btn');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            
+            if (user) {
+                // 用户已登录
+                signInBtn.style.display = 'none';
+                userMenu.style.display = 'flex';
+                
+                // 设置用户信息
+                if (user.photoURL) {
+                    userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || user.email}" style="width:100%;height:100%;border-radius:50%;">`;
+                } else {
+                    userAvatar.textContent = (user.displayName || user.email || 'User').charAt(0).toUpperCase();
+                }
+                
+                userName.textContent = user.displayName || user.email.split('@')[0];
+                
+                // 获取并保存认证令牌
+                user.getIdToken().then(function(token) {
+                    authToken = token;
+                    saveAuthTokenToStorage(token);
+                });
+            } else {
+                // 用户未登录
+                signInBtn.style.display = 'block';
+                userMenu.style.display = 'none';
+                authToken = '';
+                // 清除存储的令牌
+                localStorage.removeItem('aetherflow_auth_token');
+                localStorage.removeItem('aetherflow_auth_expires');
+            }
+        }
+        
+        // 检查URL中是否包含认证令牌
+        function checkAuthTokenInUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const uid = urlParams.get('uid');
+            const timestamp = urlParams.get('ts');
+            
+            // 如果URL中有令牌，使用该令牌登录
+            if (token && uid && timestamp) {
+                // 检查令牌是否在短时间内生成（如10分钟内）
+                const now = Date.now();
+                const tokenTime = parseInt(timestamp);
+                const timeDiff = now - tokenTime;
+                
+                // 如果令牌超过10分钟，则不处理
+                if (timeDiff > 600000) {
+                    console.log("认证令牌已过期");
+                    tryLoginWithStorage();
+                    return;
+                }
+                
+                // 使用idToken直接登录
+                firebase.auth().signInWithCredential(
+                    firebase.auth.GoogleAuthProvider.credential(token)
+                )
+                .then(() => {
+                    // 清除URL参数
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    console.log("通过扩展令牌成功登录");
+                })
+                .catch(error => {
+                    console.error("认证失败:", error);
+                    // 如果直接登录失败，尝试使用idToken验证
+                    verifyIdTokenAndLogin(token, uid);
+                });
+            } else {
+                // URL中没有令牌，尝试从localStorage恢复
+                tryLoginWithStorage();
+            }
+        }
+        
+        // 尝试使用存储的令牌登录
+        function tryLoginWithStorage() {
+            // 检查是否已经登录
+            if (firebase.auth().currentUser) {
+                return;
+            }
+            
+            // 尝试从存储中获取令牌
+            const storedToken = getAuthTokenFromStorage();
+            const expireTime = localStorage.getItem('aetherflow_auth_expires');
+            
+            if (storedToken && expireTime && Date.now() < parseInt(expireTime)) {
+                // 令牌存在且未过期，尝试自动登录
+                console.log("尝试使用存储的令牌自动登录");
+                
+                // 这里我们不直接使用令牌登录，而是让Firebase检查其缓存的认证状态
+                // Firebase会自动处理认证状态的恢复
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (!user) {
+                        console.log("存储的认证已过期，需要重新登录");
+                    }
+                });
+            }
+        }
+        
+        // 使用idToken验证并登录
+        function verifyIdTokenAndLogin(idToken, uid) {
+            // 创建临时登录凭证
+            const credential = firebase.auth.PhoneAuthProvider.credential(
+                uid, idToken.substring(0, 32)
+            );
+            
+            // 尝试使用凭证登录
+            firebase.auth().signInWithCredential(credential)
+                .then(userCredential => {
+                    console.log("用户已成功登录:", userCredential.user.uid);
+                    // 清除URL参数
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                })
+                .catch(error => {
+                    console.error("无法验证令牌:", error);
+                    // 登录失败时显示登录框
+                    openAuthModal();
+                });
         }
     </script>
 </body>

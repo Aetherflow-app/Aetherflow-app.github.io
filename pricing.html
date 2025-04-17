@@ -10,11 +10,155 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-    <!-- 引入Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase UI -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+    
+    <!-- 自定义认证CSS -->
+    <style>
+        /* 认证相关样式 */
+        .auth-btn {
+            background: transparent;
+            border: none;
+            color: #576CBC;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            margin-top: -1px; /* 微调垂直对齐 */
+        }
+        
+        .auth-btn:hover {
+            color: #19A7CE;
+            background: rgba(25, 167, 206, 0.05);
+        }
+        
+        /* 修复导航与认证按钮的对齐 */
+        .auth-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            margin-left: 10px;
+        }
+        
+        /* 当在Pricing页面时的按钮样式 */
+        .pricing-page .auth-btn {
+            background: rgba(87, 108, 188, 0.1);
+            padding: 8px 16px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4A90E2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .user-dropdown.active {
+            display: block;
+        }
+        
+        .user-dropdown a, .user-dropdown button {
+            display: block;
+            padding: 8px 15px;
+            text-align: left;
+            width: 100%;
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .user-dropdown a:hover, .user-dropdown button:hover {
+            background: #f5f5f5;
+        }
+        
+        /* 模态框样式 */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auth-modal.active {
+            display: flex;
+        }
+        
+        .auth-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .auth-title {
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .firebase-ui-container {
+            min-height: 250px;
+        }
+    </style>
 </head>
-<body>
+<body class="pricing-page">
     <header>
         <div class="container">
             <div class="logo">
@@ -28,12 +172,13 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
-                    <li id="auth-container">
-                        <button id="auth-button" class="auth-button">Sign In</button>
-                        <div id="auth-user-menu" class="auth-user-menu" style="display: none;">
-                            <span id="user-display-name"></span>
-                            <div id="auth-user-dropdown" class="auth-user-dropdown">
-                                <div class="auth-user-dropdown-item" id="logout-button">Sign Out</div>
+                    <li id="auth-section" class="auth-section">
+                        <button id="sign-in-btn" class="auth-btn">Sign in</button>
+                        <div id="user-menu" class="user-menu" style="display: none;">
+                            <div id="user-avatar" class="user-avatar">U</div>
+                            <span id="user-name">User</span>
+                            <div id="user-dropdown" class="user-dropdown">
+                                <button id="sign-out-btn">Sign out</button>
                             </div>
                         </div>
                     </li>
@@ -41,80 +186,6 @@
             </nav>
         </div>
     </header>
-
-    <!-- 认证模态框 -->
-    <div id="auth-modal-overlay" class="auth-modal-overlay">
-        <div class="auth-modal">
-            <button id="auth-modal-close" class="auth-modal-close">&times;</button>
-            
-            <div id="auth-success-message" class="auth-success-message"></div>
-            
-            <div class="auth-tabs">
-                <div id="login-tab" class="auth-tab active">Sign In</div>
-                <div id="register-tab" class="auth-tab">Sign Up</div>
-            </div>
-            
-            <div id="login-form" class="auth-form active">
-                <div class="auth-form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" required>
-                    <div id="login-email-error" class="auth-form-error"></div>
-                </div>
-                <div class="auth-form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required>
-                    <div id="login-password-error" class="auth-form-error"></div>
-                    <a href="#" id="forgot-password" class="auth-reset-link">Forgot password?</a>
-                </div>
-                <button id="login-submit" class="auth-submit">Sign In</button>
-                
-                <div class="auth-divider">
-                    <span>OR</span>
-                </div>
-                
-                <button id="google-login" class="auth-social-button">
-                    <img src="assets/google-icon.svg" alt="Google">
-                    Sign in with Google
-                </button>
-            </div>
-            
-            <div id="register-form" class="auth-form">
-                <div class="auth-form-group">
-                    <label for="register-name">Name</label>
-                    <input type="text" id="register-name" required>
-                    <div id="register-name-error" class="auth-form-error"></div>
-                </div>
-                <div class="auth-form-group">
-                    <label for="register-email">Email</label>
-                    <input type="email" id="register-email" required>
-                    <div id="register-email-error" class="auth-form-error"></div>
-                </div>
-                <div class="auth-form-group">
-                    <label for="register-password">Password</label>
-                    <input type="password" id="register-password" required>
-                    <div id="register-password-error" class="auth-form-error"></div>
-                </div>
-                <button id="register-submit" class="auth-submit">Sign Up</button>
-            </div>
-            
-            <div id="reset-form" class="auth-form">
-                <div class="auth-form-group">
-                    <label for="reset-email">Email</label>
-                    <input type="email" id="reset-email" required>
-                    <div id="reset-email-error" class="auth-form-error"></div>
-                </div>
-                <button id="reset-submit" class="auth-submit">Reset Password</button>
-                <div class="auth-footer">
-                    <a href="#" id="back-to-login">Back to Sign In</a>
-                </div>
-            </div>
-            
-            <div id="auth-loading" class="auth-loading">
-                <div class="auth-spinner"></div>
-                <p>Please wait...</p>
-            </div>
-        </div>
-    </div>
 
     <section class="pricing-hero">
         <div class="container">
@@ -380,6 +451,15 @@
         </div>
     </footer>
 
+    <!-- 认证模态框 -->
+    <div id="auth-modal" class="auth-modal" style="display: none;">
+        <div class="auth-container">
+            <button id="auth-close" class="auth-close">&times;</button>
+            <h3 class="auth-title">Sign in to AetherFlow</h3>
+            <div id="firebaseui-auth-container" class="firebase-ui-container"></div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化FAQ切换
@@ -633,10 +713,11 @@
         // 在页面加载时保存UTM参数
         saveUtmParameters();
     </script>
-    
-    <!-- 认证相关脚本 -->
+
+    <!-- 添加认证脚本 -->
     <script>
-        // Firebase配置
+        console.log("页面加载完成，开始初始化认证系统");
+        // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
             authDomain: "aetherflow-b6459.firebaseapp.com",
@@ -647,431 +728,217 @@
             measurementId: "G-ZD5E2WY22N"
         };
         
-        // 初始化Firebase
+        // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
         
-        // DOM元素
-        const authButton = document.getElementById('auth-button');
-        const authContainer = document.getElementById('auth-container');
-        const userMenu = document.getElementById('auth-user-menu');
-        const userDisplayName = document.getElementById('user-display-name');
-        const userDropdown = document.getElementById('auth-user-dropdown');
-        const logoutButton = document.getElementById('logout-button');
+        // 认证UI配置
+        const uiConfig = {
+            signInFlow: 'popup',
+            signInOptions: [
+                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                firebase.auth.EmailAuthProvider.PROVIDER_ID
+            ],
+            callbacks: {
+                signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                    // 登录成功后更新UI，不重定向
+                    updateAuthUI();
+                    closeAuthModal();
+                    return false;
+                }
+            },
+            tosUrl: 'terms-of-service.html',
+            privacyPolicyUrl: 'privacy-policy.html'
+        };
         
-        const modalOverlay = document.getElementById('auth-modal-overlay');
-        const modalClose = document.getElementById('auth-modal-close');
+        // 初始化变量
+        let ui;
+        let authToken = '';
         
-        const loginTab = document.getElementById('login-tab');
-        const registerTab = document.getElementById('register-tab');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const resetForm = document.getElementById('reset-form');
-        
-        const loginEmail = document.getElementById('login-email');
-        const loginPassword = document.getElementById('login-password');
-        const loginSubmit = document.getElementById('login-submit');
-        
-        const registerName = document.getElementById('register-name');
-        const registerEmail = document.getElementById('register-email');
-        const registerPassword = document.getElementById('register-password');
-        const registerSubmit = document.getElementById('register-submit');
-        
-        const resetEmail = document.getElementById('reset-email');
-        const resetSubmit = document.getElementById('reset-submit');
-        const backToLogin = document.getElementById('back-to-login');
-        const forgotPassword = document.getElementById('forgot-password');
-        
-        const googleLogin = document.getElementById('google-login');
-        
-        const authLoading = document.getElementById('auth-loading');
-        const successMessage = document.getElementById('auth-success-message');
-        
-        // 显示/隐藏加载状态
-        function toggleLoading(show) {
-            if (show) {
-                authLoading.classList.add('show');
+        // 初始化UI组件
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("初始化认证系统");
+            
+            // 获取UI元素
+            const signInBtn = document.getElementById('sign-in-btn');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            const userDropdown = document.getElementById('user-dropdown');
+            const signOutBtn = document.getElementById('sign-out-btn');
+            const authModal = document.getElementById('auth-modal');
+            const authClose = document.getElementById('auth-close');
+            
+            console.log("登录按钮元素:", signInBtn);
+            console.log("用户菜单元素:", userMenu);
+            console.log("模态框元素:", authModal);
+            
+            // 检查URL参数中是否有认证令牌
+            checkAuthTokenInUrl();
+            
+            // 初始化Firebase UI
+            ui = new firebaseui.auth.AuthUI(firebase.auth());
+            console.log("Firebase初始化成功");
+            
+            // 设置按钮事件
+            if (signInBtn) {
+                signInBtn.addEventListener('click', function(e) {
+                    console.log("登录按钮被点击");
+                    e.preventDefault();
+                    openAuthModal();
+                });
+                console.log("登录按钮事件已绑定");
             } else {
-                authLoading.classList.remove('show');
+                console.error("登录按钮元素不存在!");
             }
-        }
-        
-        // 显示成功消息
-        function showSuccessMessage(message) {
-            successMessage.textContent = message;
-            successMessage.classList.add('show');
-            setTimeout(() => {
-                successMessage.classList.remove('show');
-            }, 5000);
-        }
-        
-        // 显示错误消息
-        function showError(element, message) {
-            const errorElement = document.getElementById(`${element}-error`);
-            if (errorElement) {
-                errorElement.textContent = message;
-                errorElement.classList.add('show');
+            
+            if (userMenu) {
+                userMenu.addEventListener('click', function(e) {
+                    userDropdown.classList.toggle('active');
+                    e.stopPropagation();
+                });
             }
-        }
-        
-        // 清除错误消息
-        function clearErrors() {
-            const errorElements = document.querySelectorAll('.auth-form-error');
-            errorElements.forEach(el => {
-                el.textContent = '';
-                el.classList.remove('show');
+            
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', function() {
+                    firebase.auth().signOut().then(() => {
+                        updateAuthUI();
+                        userDropdown.classList.remove('active');
+                    });
+                });
+            }
+            
+            if (authClose) {
+                authClose.addEventListener('click', function() {
+                    closeAuthModal();
+                });
+            }
+            
+            document.addEventListener('click', function(e) {
+                if (userDropdown && userDropdown.classList.contains('active') && !userMenu.contains(e.target)) {
+                    userDropdown.classList.remove('active');
+                }
+                
+                if (authModal && authModal.classList.contains('active') && authModal.querySelector('.auth-container') && !authModal.querySelector('.auth-container').contains(e.target)) {
+                    closeAuthModal();
+                }
             });
-        }
+            
+            // 监听认证状态变化
+            firebase.auth().onAuthStateChanged(function(user) {
+                updateAuthUI(user);
+            });
+            
+            console.log("FirebaseUI初始化成功");
+            
+            // 修改购买按钮点击事件
+            console.log("设置购买按钮的登录检查");
+            const checkoutButtons = document.querySelectorAll('.monthly-checkout, .annual-checkout');
+            console.log("找到的购买按钮:", checkoutButtons.length);
+            
+            checkoutButtons.forEach(button => {
+                const originalClick = button.onclick;
+                button.onclick = function(e) {
+                    e.preventDefault();
+                    console.log("购买按钮被点击");
+                    
+                    // 检查用户是否已登录
+                    const user = firebase.auth().currentUser;
+                    if (!user) {
+                        console.log("用户未登录，显示登录界面");
+                        // 未登录，显示登录界面
+                        openAuthModal();
+                    } else {
+                        console.log("用户已登录，继续支付流程");
+                        // 已登录，继续支付流程
+                        if (typeof originalClick === 'function') {
+                            originalClick.call(this);
+                        }
+                    }
+                };
+            });
+        });
         
         // 打开认证模态框
         function openAuthModal() {
-            modalOverlay.classList.add('active');
+            console.log("打开认证模态框函数被调用");
+            const authModal = document.getElementById('auth-modal');
+            console.log("模态框元素:", authModal);
+            
+            if (!authModal) {
+                console.error("找不到auth-modal元素!");
+                return;
+            }
+            
+            authModal.style.display = 'flex';
+            authModal.classList.add('active');
+            
+            console.log("模态框类列表:", authModal.classList);
+            console.log("模态框样式display:", authModal.style.display);
+            
+            // 启动Firebase UI
+            ui.start('#firebaseui-auth-container', uiConfig);
+            console.log("FirebaseUI已启动");
         }
         
         // 关闭认证模态框
         function closeAuthModal() {
-            modalOverlay.classList.remove('active');
-            clearErrors();
-            successMessage.classList.remove('show');
+            console.log("关闭认证模态框");
+            const authModal = document.getElementById('auth-modal');
+            if (!authModal) return;
+            
+            authModal.style.display = 'none';
+            authModal.classList.remove('active');
         }
         
-        // 切换标签页
-        function switchTab(tab) {
-            // 移除所有活跃标签和表单
-            loginTab.classList.remove('active');
-            registerTab.classList.remove('active');
-            loginForm.classList.remove('active');
-            registerForm.classList.remove('active');
-            resetForm.classList.remove('active');
+        // 更新认证UI
+        function updateAuthUI(user) {
+            const signInBtn = document.getElementById('sign-in-btn');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
             
-            // 设置活跃标签和表单
-            if (tab === 'login') {
-                loginTab.classList.add('active');
-                loginForm.classList.add('active');
-            } else if (tab === 'register') {
-                registerTab.classList.add('active');
-                registerForm.classList.add('active');
-            } else if (tab === 'reset') {
-                resetForm.classList.add('active');
+            if (user) {
+                // 用户已登录
+                signInBtn.style.display = 'none';
+                userMenu.style.display = 'flex';
+                
+                // 设置用户信息
+                if (user.photoURL) {
+                    userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || user.email}" style="width:100%;height:100%;border-radius:50%;">`;
+                } else {
+                    userAvatar.textContent = (user.displayName || user.email || 'User').charAt(0).toUpperCase();
+                }
+                
+                userName.textContent = user.displayName || user.email.split('@')[0];
+                
+                // 获取认证令牌
+                user.getIdToken().then(function(token) {
+                    authToken = token;
+                });
+            } else {
+                // 用户未登录
+                signInBtn.style.display = 'block';
+                userMenu.style.display = 'none';
+                authToken = '';
             }
-            
-            clearErrors();
         }
         
-        // 检查URL令牌并自动登录
-        function checkAuthToken() {
+        // 检查URL中是否包含认证令牌
+        function checkAuthTokenInUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             
             if (token) {
                 // 使用令牌登录
-                toggleLoading(true);
                 firebase.auth().signInWithCustomToken(token)
                     .then(() => {
                         // 清除URL参数
-                        const newUrl = window.location.pathname + window.location.hash;
-                        window.history.replaceState({}, document.title, newUrl);
+                        window.history.replaceState({}, document.title, window.location.pathname);
                     })
                     .catch(error => {
-                        console.error("认证失败", error);
-                    })
-                    .finally(() => {
-                        toggleLoading(false);
+                        console.error("认证失败:", error);
                     });
             }
-        }
-        
-        // 更新UI显示
-        function updateAuthUI(user) {
-            if (user) {
-                // 用户已登录
-                authButton.style.display = 'none';
-                userMenu.style.display = 'block';
-                userDisplayName.textContent = user.displayName || user.email;
-            } else {
-                // 用户未登录
-                authButton.style.display = 'block';
-                userMenu.style.display = 'none';
-            }
-        }
-        
-        // 事件监听器
-        authButton.addEventListener('click', () => {
-            openAuthModal();
-            switchTab('login');
-        });
-        
-        userDisplayName.addEventListener('click', () => {
-            userDropdown.classList.toggle('active');
-        });
-        
-        logoutButton.addEventListener('click', () => {
-            firebase.auth().signOut();
-            userDropdown.classList.remove('active');
-        });
-        
-        modalClose.addEventListener('click', closeAuthModal);
-        
-        loginTab.addEventListener('click', () => switchTab('login'));
-        registerTab.addEventListener('click', () => switchTab('register'));
-        
-        forgotPassword.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchTab('reset');
-        });
-        
-        backToLogin.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchTab('login');
-        });
-        
-        // 点击模态框外部关闭
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeAuthModal();
-            }
-        });
-        
-        // 表单提交处理
-        loginSubmit.addEventListener('click', () => {
-            clearErrors();
-            
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value;
-            
-            if (!email) {
-                showError('login-email', 'Email is required');
-                return;
-            }
-            
-            if (!password) {
-                showError('login-password', 'Password is required');
-                return;
-            }
-            
-            toggleLoading(true);
-            
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    closeAuthModal();
-                })
-                .catch(error => {
-                    console.error("Login failed", error);
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                        showError('login-password', 'Invalid email or password');
-                    } else {
-                        showError('login-password', error.message);
-                    }
-                })
-                .finally(() => {
-                    toggleLoading(false);
-                });
-        });
-        
-        registerSubmit.addEventListener('click', () => {
-            clearErrors();
-            
-            const name = registerName.value.trim();
-            const email = registerEmail.value.trim();
-            const password = registerPassword.value;
-            
-            if (!name) {
-                showError('register-name', 'Name is required');
-                return;
-            }
-            
-            if (!email) {
-                showError('register-email', 'Email is required');
-                return;
-            }
-            
-            if (!password) {
-                showError('register-password', 'Password is required');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showError('register-password', 'Password must be at least 6 characters');
-                return;
-            }
-            
-            toggleLoading(true);
-            
-            firebase.auth().createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    return userCredential.user.updateProfile({
-                        displayName: name
-                    });
-                })
-                .then(() => {
-                    closeAuthModal();
-                })
-                .catch(error => {
-                    console.error("Registration failed", error);
-                    if (error.code === 'auth/email-already-in-use') {
-                        showError('register-email', 'Email is already in use');
-                    } else {
-                        showError('register-password', error.message);
-                    }
-                })
-                .finally(() => {
-                    toggleLoading(false);
-                });
-        });
-        
-        resetSubmit.addEventListener('click', () => {
-            clearErrors();
-            
-            const email = resetEmail.value.trim();
-            
-            if (!email) {
-                showError('reset-email', 'Email is required');
-                return;
-            }
-            
-            toggleLoading(true);
-            
-            firebase.auth().sendPasswordResetEmail(email)
-                .then(() => {
-                    showSuccessMessage('Password reset email sent. Check your inbox.');
-                    resetEmail.value = '';
-                })
-                .catch(error => {
-                    console.error("Password reset failed", error);
-                    if (error.code === 'auth/user-not-found') {
-                        showError('reset-email', 'No account found with this email');
-                    } else {
-                        showError('reset-email', error.message);
-                    }
-                })
-                .finally(() => {
-                    toggleLoading(false);
-                });
-        });
-        
-        googleLogin.addEventListener('click', () => {
-            clearErrors();
-            toggleLoading(true);
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            
-            firebase.auth().signInWithPopup(provider)
-                .then(() => {
-                    closeAuthModal();
-                })
-                .catch(error => {
-                    console.error("Google login failed", error);
-                    showError('login-password', error.message);
-                })
-                .finally(() => {
-                    toggleLoading(false);
-                });
-        });
-        
-        // 监听认证状态变化
-        firebase.auth().onAuthStateChanged(user => {
-            updateAuthUI(user);
-        });
-        
-        // 检查URL令牌
-        checkAuthToken();
-        
-        // 处理从扩展跳转过来的支付请求
-        document.addEventListener('DOMContentLoaded', () => {
-            const monthlyCheckout = document.querySelector('.monthly-checkout');
-            const annualCheckout = document.querySelector('.annual-checkout');
-            
-            if (monthlyCheckout) {
-                monthlyCheckout.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    handleCheckoutClick('monthly');
-                });
-            }
-            
-            if (annualCheckout) {
-                annualCheckout.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    handleCheckoutClick('annual');
-                });
-            }
-        });
-        
-        // 处理支付点击，检查登录状态
-        function handleCheckoutClick(planType) {
-            const currentUser = firebase.auth().currentUser;
-            
-            if (!currentUser) {
-                // 用户未登录，显示登录框
-                openAuthModal();
-                switchTab('login');
-                
-                // 在localStorage中保存计划类型，用户登录后继续支付流程
-                localStorage.setItem('aetherflow_pending_checkout', planType);
-                return;
-            }
-            
-            // 用户已登录，直接继续支付流程
-            initializeCheckout(planType, currentUser.uid);
-        }
-        
-        // 在登录状态变化时检查是否有待处理的支付
-        firebase.auth().onAuthStateChanged(user => {
-            updateAuthUI(user);
-            
-            // 检查是否有待处理的支付请求
-            const pendingCheckout = localStorage.getItem('aetherflow_pending_checkout');
-            
-            if (user && pendingCheckout) {
-                // 用户登录后继续支付流程
-                initializeCheckout(pendingCheckout, user.uid);
-                // 清除待处理标记
-                localStorage.removeItem('aetherflow_pending_checkout');
-            }
-        });
-        
-        // 初始化结账流程，包含用户ID
-        function initializeCheckout(planType, userId) {
-            // 检查环境
-            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-            const vendorId = useSandbox ? '16291' : '17071'; // 沙盒/生产环境的vendorId
-            const productIds = {
-                monthly: useSandbox ? 'pro-monthly-sandbox' : 'pro-monthly',
-                annual: useSandbox ? 'pro-annual-sandbox' : 'pro-annual'
-            };
-            
-            const productId = productIds[planType];
-            if (!productId) {
-                console.error('无效的计划类型:', planType);
-                return;
-            }
-            
-            // 获取UTM参数
-            const utmSource = localStorage.getItem('aetherflow_utm_source') || '';
-            const utmCampaign = localStorage.getItem('aetherflow_utm_campaign') || '';
-            
-            // 构建客户数据
-            const customer = {
-                email: firebase.auth().currentUser?.email || ''
-            };
-            
-            // 构建自定义数据，包括用户ID
-            const passthrough = JSON.stringify({
-                userId: userId,
-                utmSource: utmSource,
-                utmCampaign: utmCampaign,
-                env: useSandbox ? 'sandbox' : 'production'
-            });
-            
-            // 创建结账对象
-            Paddle.Environment.set(useSandbox ? 'sandbox' : 'production');
-            Paddle.Setup({ vendor: vendorId });
-            
-            // 打开结账界面
-            Paddle.Checkout.open({
-                product: productId,
-                email: customer.email,
-                passthrough: passthrough,
-                successCallback: handleCheckoutCompleted
-            });
         }
     </script>
 </body>
