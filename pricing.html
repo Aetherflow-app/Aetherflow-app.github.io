@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-<<<<<<< HEAD
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -141,8 +140,6 @@
             min-height: 250px;
         }
     </style>
-=======
->>>>>>> parent of 8e1600f (重构5)
 </head>
 <body>
     <header>
@@ -158,7 +155,6 @@
                     <li><a href="privacy-policy.html">Privacy</a></li>
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
-<<<<<<< HEAD
                     <li id="auth-section" class="auth-section">
                         <button id="sign-in-btn" class="auth-btn">Sign in</button>
                         <div id="user-menu" class="user-menu" style="display: none;">
@@ -169,8 +165,6 @@
                             </div>
                         </div>
                     </li>
-=======
->>>>>>> parent of 8e1600f (重构5)
                 </ul>
             </nav>
         </div>
@@ -453,7 +447,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化FAQ切换
             const faqQuestions = document.querySelectorAll('.faq-question');
-<<<<<<< HEAD
             
             faqQuestions.forEach(item => {
                 item.addEventListener('click', function() {
@@ -884,256 +877,6 @@
                     });
             }
         }
-=======
-            
-            faqQuestions.forEach(item => {
-                item.addEventListener('click', function() {
-                    const faqItem = item.parentNode;
-                    const answer = faqItem.querySelector('.faq-answer');
-                    const toggle = item.querySelector('.faq-toggle');
-                    
-                    // 切换class
-                    faqItem.classList.toggle('open');
-                    
-                    // 更新切换图标
-                    if (faqItem.classList.contains('open')) {
-                        toggle.textContent = '-';
-                        answer.style.maxHeight = answer.scrollHeight + 'px';
-                    } else {
-                        toggle.textContent = '+';
-                        answer.style.maxHeight = '0';
-                    }
-                });
-            });
-            
-            // 初始化Paddle支付
-            initializePaddle();
-            
-            // 设置结账点击处理函数
-            document.querySelector('.monthly-checkout').addEventListener('click', function(e) {
-                e.preventDefault();
-                openCheckout('monthly');
-            });
-            
-            document.querySelector('.annual-checkout').addEventListener('click', function(e) {
-                e.preventDefault();
-                openCheckout('annual');
-            });
-        });
-        
-        // 切换月度和年度价格
-        function showMonthly() {
-            document.querySelector('.monthly-plan').style.display = 'block';
-            document.querySelector('.annual-plan').style.display = 'none';
-            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.pricing-tab')[0].classList.add('active');
-        }
-        
-        function showAnnual() {
-            document.querySelector('.monthly-plan').style.display = 'none';
-            document.querySelector('.annual-plan').style.display = 'block';
-            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.pricing-tab')[1].classList.add('active');
-        }
-        
-        // 滚动到价格计划部分
-        function scrollToPlans() {
-            document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // 初始化Paddle支付系统
-        function initializePaddle() {
-            // 1. 检查URL参数是否有明确的环境指定
-            const urlParams = new URLSearchParams(window.location.search);
-            const envParam = urlParams.get('env');
-            
-            // 2. 判断环境
-            // 明确参数指定的环境 > 域名判断环境
-            let useSandbox = false;
-            
-            // 如果URL参数明确指定了环境
-            if (envParam) {
-                useSandbox = envParam === 'sandbox' || envParam === 'test';
-            } else {
-                // 判断开发环境
-                const isLocalhost = window.location.hostname === 'localhost' || 
-                                   window.location.hostname === '127.0.0.1' ||
-                                   window.location.hostname.includes('github.dev');
-                                   
-                // 判断非生产环境
-                const isNonProduction = isLocalhost || 
-                                       window.location.hostname.includes('github.io') ||
-                                       window.location.hostname.includes('test');
-                                   
-                // 非生产环境默认使用沙盒
-                useSandbox = isNonProduction;
-            }
-            
-            // 3. 设置环境和初始化Paddle
-            if (useSandbox) {
-                Paddle.Environment.set('sandbox');
-                console.log('Using Paddle SANDBOX environment');
-            } else {
-                console.log('Using Paddle PRODUCTION environment');
-            }
-            
-            // 初始化Paddle
-            Paddle.Initialize({
-                token: useSandbox ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
-                eventCallback: function(eventData) {
-                    console.log('Paddle event:', eventData);
-                    
-                    // 处理结账事件
-                    if (eventData.name === 'checkout.completed') {
-                        // 支付成功，处理跳转
-                        handleCheckoutCompleted(eventData.data);
-                    }
-                }
-            });
-            
-            // 4. 记录当前环境，用于调试和测试
-            localStorage.setItem('aetherflow_env', useSandbox ? 'sandbox' : 'production');
-            
-            // 如果需要在UI上显示当前环境（仅在非生产环境）
-            if (useSandbox) {
-                const envIndicator = document.createElement('div');
-                envIndicator.style.position = 'fixed';
-                envIndicator.style.bottom = '10px';
-                envIndicator.style.left = '10px';
-                envIndicator.style.padding = '5px 10px';
-                envIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                envIndicator.style.color = '#900';
-                envIndicator.style.borderRadius = '4px';
-                envIndicator.style.fontSize = '12px';
-                envIndicator.style.zIndex = '9999';
-                envIndicator.textContent = 'SANDBOX MODE';
-                document.body.appendChild(envIndicator);
-            }
-        }
-        
-        // 打开结账窗口
-        function openCheckout(planType) {
-            // 获取来源信息
-            const source = getUtmSource();
-            
-            // 确定使用哪个价格ID
-            const priceId = getPriceIdForPlan(planType);
-            
-            // 准备自定义数据
-            const customData = {
-                plan: planType,
-                source: source || 'website',
-                referrer: document.referrer || 'direct'
-            };
-            
-            // 获取URL参数并传递
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('utm_campaign')) {
-                customData.utm_campaign = urlParams.get('utm_campaign');
-            }
-            if (urlParams.has('utm_content')) {
-                customData.utm_content = urlParams.get('utm_content');
-            }
-            
-            // 打开Paddle结账
-            Paddle.Checkout.open({
-                items: [
-                    {
-                        priceId: priceId,
-                        quantity: 1
-                    }
-                ],
-                customData: customData,
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'light',
-                    locale: 'en',
-                    successUrl: getSuccessUrl(planType, source)
-                }
-            });
-        }
-        
-        // 根据计划类型获取价格ID
-        function getPriceIdForPlan(planType) {
-            // 获取当前环境
-            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-            
-            // 根据环境和计划类型返回对应的价格ID
-            if (useSandbox) {
-                // 沙盒环境的价格ID
-                return planType === 'annual' ? 'pri_01jrw0f7y1kfw9jc967eswbnrs' : 'pri_01jrw0em3kydrg4rw523w6s574';
-            } else {
-                // 生产环境的价格ID
-                return planType === 'annual' ? 'pri_01jrfcz25f4zdktr7rtt1pnzpw' : 'pri_01jrfcwajex91zya4346h9ek32';
-            }
-        }
-        
-        // 获取UTM来源
-        function getUtmSource() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('utm_source') || localStorage.getItem('aetherflow_utm_source') || null;
-        }
-        
-        // 构建成功URL
-        function getSuccessUrl(planType, source) {
-            // 获取基础URL
-            let baseUrl;
-            
-            // 检查环境
-            const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-            
-            // 如果是localhost，使用相对路径
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                baseUrl = '/success.html';
-            } else {
-                // 使用完整URL
-                baseUrl = window.location.origin + '/success.html';
-            }
-            
-            // 构建URL参数
-            const params = new URLSearchParams();
-            params.set('plan', planType);
-            if (source) {
-                params.set('source', source);
-            }
-            
-            // 添加环境参数（仅在沙盒环境）
-            if (useSandbox) {
-                params.set('env', 'sandbox');
-            }
-            
-            return baseUrl + '?' + params.toString();
-        }
-        
-        // 处理结账完成事件
-        function handleCheckoutCompleted(data) {
-            console.log('Checkout completed:', data);
-            
-            // 从事件数据中获取信息
-            const checkoutId = data.checkout?.id;
-            const planType = data.items?.[0]?.price?.productType || 'monthly';
-            
-            // 构建跳转URL
-            let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
-            
-            // 跳转到成功页面
-            window.location.href = redirectUrl;
-        }
-        
-        // 保存UTM来源到localStorage（如果存在）
-        function saveUtmParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('utm_source')) {
-                localStorage.setItem('aetherflow_utm_source', urlParams.get('utm_source'));
-            }
-            if (urlParams.has('utm_campaign')) {
-                localStorage.setItem('aetherflow_utm_campaign', urlParams.get('utm_campaign'));
-            }
-        }
-        
-        // 在页面加载时保存UTM参数
-        saveUtmParameters();
->>>>>>> parent of 8e1600f (重构5)
     </script>
 </body>
 </html> 
