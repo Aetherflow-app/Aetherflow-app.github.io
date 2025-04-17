@@ -10,9 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入Paddle.js -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-    <!-- 引入认证服务脚本 -->
-    <script src="assets/js/auth-service.js"></script>
-    <script src="assets/js/auth-ui.js"></script>
 </head>
 <body>
     <header>
@@ -298,29 +295,6 @@
     </footer>
 
     <script>
-        let isMonthlyPlan = true;
-        
-        function showMonthly() {
-            document.querySelector('.monthly-plan').style.display = 'block';
-            document.querySelector('.annual-plan').style.display = 'none';
-            document.querySelectorAll('.pricing-tab')[0].classList.add('active');
-            document.querySelectorAll('.pricing-tab')[1].classList.remove('active');
-            isMonthlyPlan = true;
-        }
-        
-        function showAnnual() {
-            document.querySelector('.monthly-plan').style.display = 'none';
-            document.querySelector('.annual-plan').style.display = 'block';
-            document.querySelectorAll('.pricing-tab')[0].classList.remove('active');
-            document.querySelectorAll('.pricing-tab')[1].classList.add('active');
-            isMonthlyPlan = false;
-        }
-        
-        // 滚动到价格计划部分
-        function scrollToPlans() {
-            document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
-        }
-        
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化FAQ切换
             const faqQuestions = document.querySelectorAll('.faq-question');
@@ -345,58 +319,73 @@
                 });
             });
             
-            // 初始化Paddle和认证UI
-            initializePaddleAndUI();
+            // 初始化Paddle支付
+            initializePaddle();
             
             // 设置结账点击处理函数
             document.querySelector('.monthly-checkout').addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                // 检查是否已登录
-                if (window.authService && window.authService.isAuthenticated()) {
-                    // 已登录，直接打开支付
-                    openCheckout('monthly');
-                } else {
-                    // 未登录，先显示登录界面
-                    openAuthModal(() => {
-                        openCheckout('monthly');
-                    });
-                }
+                openCheckout('monthly');
             });
             
             document.querySelector('.annual-checkout').addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                // 检查是否已登录
-                if (window.authService && window.authService.isAuthenticated()) {
-                    // 已登录，直接打开支付
-                    openCheckout('annual');
-                } else {
-                    // 未登录，先显示登录界面
-                    openAuthModal(() => {
-                        openCheckout('annual');
-                    });
-                }
+                openCheckout('annual');
             });
         });
         
-        function initializePaddleAndUI() {
-            // 1. 获取URL参数中的环境设置
+        // 切换月度和年度价格
+        function showMonthly() {
+            document.querySelector('.monthly-plan').style.display = 'block';
+            document.querySelector('.annual-plan').style.display = 'none';
+            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.pricing-tab')[0].classList.add('active');
+        }
+        
+        function showAnnual() {
+            document.querySelector('.monthly-plan').style.display = 'none';
+            document.querySelector('.annual-plan').style.display = 'block';
+            document.querySelectorAll('.pricing-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.pricing-tab')[1].classList.add('active');
+        }
+        
+        // 滚动到价格计划部分
+        function scrollToPlans() {
+            document.querySelector('.pricing-details').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 初始化Paddle支付系统
+        function initializePaddle() {
+            // 1. 检查URL参数是否有明确的环境指定
             const urlParams = new URLSearchParams(window.location.search);
-            const envParam = urlParams.get('env') || '';
+            const envParam = urlParams.get('env');
             
-            // 2. 检查本地存储中的环境设置
-            const storedEnv = localStorage.getItem('aetherflow_env');
-            
-            // 3. 确定当前应该使用的环境
+            // 2. 判断环境
+            // 明确参数指定的环境 > 域名判断环境
             let useSandbox = false;
             
-            if (envParam === 'sandbox' || envParam === 'test') {
-                useSandbox = true;
-                console.log('Using Paddle SANDBOX environment from URL param');
-            } else if (storedEnv === 'sandbox') {
-                useSandbox = true;
-                console.log('Using Paddle SANDBOX environment from localStorage');
+            // 如果URL参数明确指定了环境
+            if (envParam) {
+                useSandbox = envParam === 'sandbox' || envParam === 'test';
+            } else {
+                // 判断开发环境
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1' ||
+                                   window.location.hostname.includes('github.dev');
+                                   
+                // 判断非生产环境
+                const isNonProduction = isLocalhost || 
+                                       window.location.hostname.includes('github.io') ||
+                                       window.location.hostname.includes('test');
+                                   
+                // 非生产环境默认使用沙盒
+                useSandbox = isNonProduction;
+            }
+            
+            // 3. 设置环境和初始化Paddle
+            if (useSandbox) {
+                Paddle.Environment.set('sandbox');
+                console.log('Using Paddle SANDBOX environment');
             } else {
                 console.log('Using Paddle PRODUCTION environment');
             }
@@ -433,9 +422,6 @@
                 envIndicator.textContent = 'SANDBOX MODE';
                 document.body.appendChild(envIndicator);
             }
-            
-            // 设置window.authService，确保auth-ui.js能访问
-            window.authService = authService;
         }
         
         // 打开结账窗口
@@ -462,21 +448,8 @@
                 customData.utm_content = urlParams.get('utm_content');
             }
             
-            // 添加用户信息（如果已登录）
-            if (window.authService && window.authService.isAuthenticated()) {
-                const user = window.authService.getCurrentUser();
-                if (user) {
-                    customData.userId = user.uid;
-                    customData.userEmail = user.email;
-                    
-                    // 保存到localStorage备份
-                    localStorage.setItem('aetherflow_checkout_user', user.uid);
-                    localStorage.setItem('aetherflow_checkout_email', user.email || '');
-                }
-            }
-            
-            // 构建结账设置
-            const checkoutSettings = {
+            // 打开Paddle结账
+            Paddle.Checkout.open({
                 items: [
                     {
                         priceId: priceId,
@@ -490,20 +463,7 @@
                     locale: 'en',
                     successUrl: getSuccessUrl(planType, source)
                 }
-            };
-            
-            // 如果用户已登录，预填充用户邮箱
-            if (window.authService && window.authService.isAuthenticated()) {
-                const user = window.authService.getCurrentUser();
-                if (user && user.email) {
-                    checkoutSettings.customer = {
-                        email: user.email
-                    };
-                }
-            }
-            
-            // 打开Paddle结账
-            Paddle.Checkout.open(checkoutSettings);
+            });
         }
         
         // 根据计划类型获取价格ID
@@ -555,20 +515,6 @@
                 params.set('env', 'sandbox');
             }
             
-            // 添加用户ID（如果已登录）
-            if (window.authService && window.authService.isAuthenticated()) {
-                const user = window.authService.getCurrentUser();
-                if (user) {
-                    params.set('uid', user.uid);
-                }
-            } else {
-                // 从localStorage获取（如果存在）
-                const userId = localStorage.getItem('aetherflow_checkout_user');
-                if (userId) {
-                    params.set('uid', userId);
-                }
-            }
-            
             return baseUrl + '?' + params.toString();
         }
         
@@ -582,25 +528,6 @@
             
             // 构建跳转URL
             let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
-            
-            // 添加用户ID（如果已登录）
-            if (window.authService && window.authService.isAuthenticated()) {
-                const user = window.authService.getCurrentUser();
-                if (user) {
-                    redirectUrl += '&uid=' + encodeURIComponent(user.uid);
-                }
-            } else {
-                // 从localStorage获取（如果存在）
-                const userId = localStorage.getItem('aetherflow_checkout_user');
-                if (userId) {
-                    redirectUrl += '&uid=' + encodeURIComponent(userId);
-                }
-            }
-            
-            // 添加环境参数（如果在沙盒环境）
-            if (localStorage.getItem('aetherflow_env') === 'sandbox') {
-                redirectUrl += '&env=sandbox';
-            }
             
             // 跳转到成功页面
             window.location.href = redirectUrl;
