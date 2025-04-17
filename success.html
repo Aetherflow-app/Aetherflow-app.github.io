@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="assets/js/auth-service.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -148,6 +149,13 @@
                     <p class="zh" style="display:none;">方案：<span id="plan-type-zh">月度</span></p>
                 </div>
                 
+                <!-- 添加认证状态测试区域 -->
+                <div class="auth-test" style="margin-top: 20px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;">
+                    <p class="en">Auth Status: <span id="auth-status">Checking...</span></p>
+                    <p class="zh" style="display:none;">认证状态：<span id="auth-status-zh">检查中...</span></p>
+                    <button id="check-auth-btn" class="btn btn-outline" style="margin-top: 10px;" onclick="checkAuthStatus()">Check Auth Status</button>
+                </div>
+                
                 <div class="cta-buttons">
                     <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn" class="btn btn-primary en">Open AetherFlow</a>
                     <a href="chrome-extension://ldpadjcdbfndeghcklogoppmbnmphbki/pages/sidepanel/index.html" id="open-extension-btn-zh" class="btn btn-primary zh" style="display:none;">打开AetherFlow</a>
@@ -220,13 +228,31 @@
         
         // 处理支付成功数据
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化认证服务
+            if (window.authService) {
+                window.authService.initialize().then(() => {
+                    // 认证服务初始化完成后处理支付成功
+                    processPaymentSuccess();
+                });
+            } else {
+                // 如果认证服务不可用，仍然处理支付成功
+                processPaymentSuccess();
+            }
+            
             // 应用保存的语言偏好
             applyLanguagePreference();
             
+            // 等待认证服务初始化后检查状态
+            setTimeout(checkAuthStatus, 1000);
+        });
+        
+        // 处理支付成功逻辑
+        function processPaymentSuccess() {
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
             const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
+            const userId = urlParams.get('uid');
             const envParam = urlParams.get('env');
             
             // 判断环境
@@ -257,6 +283,7 @@
             if (checkoutId) {
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
+                console.log('User ID:', userId);
                 console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
                 
                 // 更新交易ID显示
@@ -283,21 +310,73 @@
                     if (planElementZh) planElementZh.textContent = '月度';
                 }
                 
+                // 准备支付成功数据
+                const paymentData = {
+                    checkoutId: checkoutId,
+                    planType: planType || 'monthly',
+                    timestamp: Date.now(),
+                    userId: userId || localStorage.getItem('aetherflow_checkout_user') || null
+                };
+                
+                // 保存支付数据
+                savePaymentData(paymentData);
+                
                 // 尝试与扩展通信，更新会员状态
-                communicateWithExtension(checkoutId, planType);
+                communicateWithExtension(paymentData);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
                 localStorage.setItem('aetherflow_checkout_id', checkoutId);
                 localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
+                
+                // 如果有用户ID，确保在localStorage中保存
+                if (userId) {
+                    localStorage.setItem('aetherflow_checkout_user', userId);
+                }
             }
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
             updateExtensionButtons();
-        });
+        }
+        
+        // 将支付数据保存到Firebase（如果用户已登录）
+        function savePaymentData(paymentData) {
+            // 检查认证服务和登录状态
+            if (!window.authService || !window.authService.isAuthenticated()) {
+                console.log('认证服务不可用或用户未登录，无法保存支付数据到Firebase');
+                return;
+            }
+            
+            // 从认证服务获取当前用户
+            const user = window.authService.getCurrentUser();
+            
+            // 如果有有效的用户ID（URL参数或localStorage），但与当前登录用户不同
+            if (paymentData.userId && user && paymentData.userId !== user.uid) {
+                console.log('警告：支付关联的用户ID与当前登录用户不匹配');
+                
+                // 仍使用当前登录用户
+                paymentData.userId = user.uid;
+            }
+            
+            // 如果没有用户ID但有登录用户，使用登录用户ID
+            if (!paymentData.userId && user) {
+                paymentData.userId = user.uid;
+            }
+            
+            // 如果有有效的用户ID，保存到localStorage
+            if (paymentData.userId) {
+                localStorage.setItem('aetherflow_checkout_user', paymentData.userId);
+            }
+            
+            console.log('准备与支付数据一起使用的用户ID:', paymentData.userId);
+            
+            // 这里可以添加实际的Firebase数据存储逻辑
+            // 例如：将支付数据存储到Firestore
+            // 注意：此功能需要在后续扩展实现
+        }
         
         // 尝试与扩展通信，通知支付成功
-        function communicateWithExtension(checkoutId, planType) {
+        function communicateWithExtension(paymentData) {
             try {
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
@@ -305,9 +384,10 @@
                 // 准备消息数据
                 const messageData = {
                     type: 'PAYMENT_SUCCESS',
-                    checkoutId: checkoutId,
-                    planType: planType || 'monthly',
-                    timestamp: Date.now()
+                    checkoutId: paymentData.checkoutId,
+                    planType: paymentData.planType,
+                    userId: paymentData.userId,
+                    timestamp: paymentData.timestamp
                 };
                 
                 console.log('Attempting to communicate with extension:', messageData);
@@ -349,6 +429,34 @@
                     });
                 }
             });
+        }
+        
+        // 检查认证状态函数
+        function checkAuthStatus() {
+            const statusEl = document.getElementById('auth-status');
+            const statusElZh = document.getElementById('auth-status-zh');
+            
+            if (window.authService) {
+                if (window.authService.isAuthenticated()) {
+                    const user = window.authService.getCurrentUser();
+                    const userInfo = `Logged in as: ${user.email || '(no email)'} (${user.uid})`;
+                    
+                    if (statusEl) statusEl.textContent = userInfo;
+                    if (statusElZh) statusElZh.textContent = `已登录: ${user.email || '(无邮箱)'} (${user.uid})`;
+                    
+                    console.log('当前用户信息:', user);
+                } else {
+                    if (statusEl) statusEl.textContent = 'Not logged in';
+                    if (statusElZh) statusElZh.textContent = '未登录';
+                    
+                    console.log('未登录状态');
+                }
+            } else {
+                if (statusEl) statusEl.textContent = 'Auth service not available';
+                if (statusElZh) statusElZh.textContent = '认证服务不可用';
+                
+                console.log('认证服务不可用');
+            }
         }
     </script>
 </body>
