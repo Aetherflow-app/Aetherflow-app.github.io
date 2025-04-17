@@ -8,12 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 引入Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-    <!-- 引入认证模块 -->
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/auth-ui.js"></script>
     <style>
         .success-container {
             text-align: center;
@@ -89,33 +83,6 @@
             font-size: 14px;
             color: #666;
         }
-
-        .user-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e9f5ff;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: #ddd;
-            overflow: hidden;
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
     </style>
 </head>
 <body>
@@ -133,9 +100,6 @@
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
-                <div class="auth-buttons-container">
-                    <!-- 认证按钮将在这里动态生成 -->
-                </div>
             </nav>
         </div>
     </header>
@@ -155,11 +119,6 @@
                 <p class="success-message zh" style="display:none;">
                     感谢您升级到AetherFlow专业版！您的账户已成功升级，现在您可以使用所有高级功能。
                 </p>
-                
-                <div class="user-info">
-                    <div class="user-avatar" id="user-avatar"></div>
-                    <span id="user-email">正在加载用户信息...</span>
-                </div>
                 
                 <div class="next-steps">
                     <h3 class="en">Next Steps:</h3>
@@ -259,36 +218,10 @@
             }
         }
         
-        // 更新用户信息
-        function updateUserInfo(user) {
-            const userAvatar = document.getElementById('user-avatar');
-            const userEmail = document.getElementById('user-email');
-            
-            if (user) {
-                // 显示用户头像
-                if (user.photoURL) {
-                    userAvatar.innerHTML = `<img src="${user.photoURL}" alt="User Avatar">`;
-                }
-                
-                // 显示用户邮箱
-                userEmail.textContent = user.email || user.displayName || '已登录用户';
-            } else {
-                userEmail.textContent = '未登录用户';
-                userAvatar.innerHTML = '';
-            }
-        }
-        
         // 处理支付成功数据
-        document.addEventListener('DOMContentLoaded', async function() {
-            // 初始化认证UI
-            window.AetherFlowAuthUI.initAuthUI();
-            
+        document.addEventListener('DOMContentLoaded', function() {
             // 应用保存的语言偏好
             applyLanguagePreference();
-            
-            // 获取当前用户
-            const user = await window.AetherFlowAuth.getCurrentUser();
-            updateUserInfo(user);
             
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
@@ -325,7 +258,6 @@
                 console.log('Checkout ID:', checkoutId);
                 console.log('Plan Type:', planType);
                 console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
-                console.log('User ID:', user ? user.uid : 'Not logged in');
                 
                 // 更新交易ID显示
                 const transactionElements = [
@@ -351,32 +283,13 @@
                     if (planElementZh) planElementZh.textContent = '月度';
                 }
                 
-                // 准备发送给扩展的数据，包含用户ID
-                const messageData = {
-                    type: 'PAYMENT_SUCCESS',
-                    checkoutId: checkoutId,
-                    planType: planType || 'monthly',
-                    timestamp: Date.now()
-                };
-                
-                // 如果用户已登录，添加用户ID
-                if (user) {
-                    messageData.userId = user.uid;
-                    messageData.userEmail = user.email;
-                }
-                
                 // 尝试与扩展通信，更新会员状态
-                communicateWithExtension(messageData);
+                communicateWithExtension(checkoutId, planType);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
                 localStorage.setItem('aetherflow_checkout_id', checkoutId);
                 localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
-                
-                // 如果用户已登录，保存用户ID
-                if (user) {
-                    localStorage.setItem('aetherflow_payment_user_id', user.uid);
-                }
             }
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
@@ -384,10 +297,18 @@
         });
         
         // 尝试与扩展通信，通知支付成功
-        function communicateWithExtension(messageData) {
+        function communicateWithExtension(checkoutId, planType) {
             try {
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+                
+                // 准备消息数据
+                const messageData = {
+                    type: 'PAYMENT_SUCCESS',
+                    checkoutId: checkoutId,
+                    planType: planType || 'monthly',
+                    timestamp: Date.now()
+                };
                 
                 console.log('Attempting to communicate with extension:', messageData);
                 

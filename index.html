@@ -8,12 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 引入Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-    <!-- 引入认证模块 -->
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/auth-ui.js"></script>
 </head>
 <body>
     <header>
@@ -30,9 +24,6 @@
                     <li><a href="refund-policy.html">Refunds</a></li>
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
-                <div class="auth-buttons-container">
-                    <!-- 认证按钮将在这里动态生成 -->
-                </div>
             </nav>
         </div>
     </header>
@@ -286,8 +277,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化认证UI
-            window.AetherFlowAuthUI.initAuthUI();
             // 添加视频播放事件监听器
             const videoPlaceholder = document.querySelector('.video-placeholder');
             if (videoPlaceholder) {
