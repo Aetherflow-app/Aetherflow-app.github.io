@@ -220,39 +220,19 @@
         
         // 处理支付成功数据
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('[SuccessPage] DOMContentLoaded triggered.');
             // 应用保存的语言偏好
             applyLanguagePreference();
             
             // 解析URL参数
             const urlParams = new URLSearchParams(window.location.search);
-            // const checkoutId = urlParams.get('checkout'); // 不再主要依赖 URL checkout 参数
+            const checkoutId = urlParams.get('checkout');
             const planType = urlParams.get('plan');
             const envParam = urlParams.get('env');
-            console.log('[SuccessPage] Parsed URL params (initial):', { planType, envParam }); // 修改日志，移除 checkoutId
-
-            // 尝试从 localStorage 获取 checkoutId (由 paddle.js 的 checkout.completed 事件存入)
-            let checkoutId = localStorage.getItem('aetherflow_pending_checkoutId');
-            if (checkoutId) {
-                // 读取后立即移除，防止重复处理或遗留
-                localStorage.removeItem('aetherflow_pending_checkoutId'); 
-                console.log('[SuccessPage] Checkout ID retrieved from localStorage:', checkoutId);
-            } else {
-                // 作为备选，检查 URL 中是否有 Paddle 可能添加的参数（例如 _ptxn）
-                // (这里的参数名需要根据实际测试或 Paddle 文档确认)
-                checkoutId = urlParams.get('_ptxn') || urlParams.get('paddle_txn_id') || urlParams.get('transaction_id');
-                if (checkoutId) {
-                     console.log('[SuccessPage] Checkout ID retrieved from fallback URL parameter:', checkoutId);
-                } else {
-                    console.warn('[SuccessPage] Could not retrieve Checkout ID from localStorage or fallback URL parameters.');
-                }
-            }
             
             // 判断环境
             const isSandbox = envParam === 'sandbox' || 
                             envParam === 'test' || 
                             localStorage.getItem('aetherflow_env') === 'sandbox';
-            console.log('[SuccessPage] Determined environment:', isSandbox ? 'sandbox' : 'production');
             
             // 如果是沙盒环境，显示相应标识
             if (isSandbox) {
@@ -269,12 +249,15 @@
                 envIndicator.textContent = 'SANDBOX PAYMENT';
                 document.body.appendChild(envIndicator);
                 
+                // 记录环境
                 localStorage.setItem('aetherflow_env', 'sandbox');
             }
             
             // 如果有结账参数，使用它们进行验证
             if (checkoutId) {
-                console.log('[SuccessPage] checkoutId found in URL, proceeding with UI updates and extension communication.');
+                console.log('Checkout ID:', checkoutId);
+                console.log('Plan Type:', planType);
+                console.log('Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
                 
                 // 更新交易ID显示
                 const transactionElements = [
@@ -301,15 +284,12 @@
                 }
                 
                 // 尝试与扩展通信，更新会员状态
-                console.log('[SuccessPage] Preparing to call communicateWithExtension...');
                 communicateWithExtension(checkoutId, planType);
                 
                 // 保存到localStorage作为备份
                 localStorage.setItem('aetherflow_payment_success', 'true');
                 localStorage.setItem('aetherflow_checkout_id', checkoutId);
                 localStorage.setItem('aetherflow_plan_type', planType || 'monthly');
-            } else {
-                console.warn('[SuccessPage] checkoutId not found in URL. Skipping extension communication and UI updates based on checkoutId.');
             }
             
             // 更新打开AetherFlow按钮，使用当前的扩展ID
@@ -318,7 +298,6 @@
         
         // 尝试与扩展通信，通知支付成功
         function communicateWithExtension(checkoutId, planType) {
-            console.log('[SuccessPage Communicate] Function called with:', { checkoutId, planType });
             try {
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
@@ -330,12 +309,9 @@
                     try {
                         const user = JSON.parse(storedUser);
                         userId = user.uid; // 提取用户 ID
-                        console.log('[SuccessPage Communicate] Retrieved userId from localStorage:', userId);
                     } catch (e) {
-                        console.error('[SuccessPage Communicate] 解析localStorage用户信息失败:', e);
+                        console.error('解析localStorage用户信息失败:', e);
                     }
-                } else {
-                    console.warn('[SuccessPage Communicate] localStorage did not contain user info.');
                 }
                 
                 // 获取当前环境
@@ -344,7 +320,6 @@
                                 envParam === 'test' || 
                                 localStorage.getItem('aetherflow_env') === 'sandbox';
                 const environment = isSandbox ? 'sandbox' : 'production';
-                console.log('[SuccessPage Communicate] Determined environment:', environment);
 
                 // 准备消息数据
                 const messageData = {
@@ -356,29 +331,27 @@
                     timestamp: Date.now()
                 };
                 
-                console.log('[SuccessPage Communicate] Final messageData:', messageData);
-                
                 // 检查 userId 是否获取成功
                 if (!userId) {
-                    console.warn('[SuccessPage Communicate] userId is null, sending message without user association.');
+                    console.warn('无法获取用户ID，将发送不带用户ID的支付成功消息');
                 }
 
-                console.log('[SuccessPage Communicate] Attempting chrome.runtime.sendMessage...');
+                console.log('Attempting to communicate with extension:', messageData);
                 
                 // 尝试发送消息到扩展
                 if (typeof chrome !== 'undefined' && chrome.runtime) {
                     chrome.runtime.sendMessage(extensionId, messageData, function(response) {
                         if (chrome.runtime.lastError) {
-                            console.error('[SuccessPage Communicate] Failed to communicate with extension:', chrome.runtime.lastError.message || chrome.runtime.lastError);
+                            console.log('Failed to communicate with extension:', chrome.runtime.lastError);
                         } else {
-                            console.log('[SuccessPage Communicate] Successfully communicated with extension. Response:', response);
+                            console.log('Successfully communicated with extension:', response);
                         }
                     });
                 } else {
-                    console.log('[SuccessPage Communicate] Chrome API not available.');
+                    console.log('Chrome API not available. Data saved to localStorage for later retrieval.');
                 }
             } catch (error) {
-                console.error('[SuccessPage Communicate] Error during communication attempt:', error);
+                console.error('Error communicating with extension:', error);
             }
         }
         

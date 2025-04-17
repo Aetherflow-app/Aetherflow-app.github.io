@@ -189,16 +189,10 @@ function getSuccessUrl(planType, source) {
 function handleCheckoutCompleted(data) {
     console.log('Checkout completed event received:', data);
     
-    // 从事件数据中获取信息
-    const checkoutId = data?.checkout?.id || data?.transaction_id; // 尝试获取 checkout.id 或 transaction_id
+    // 从事件数据中获取信息 (这段代码现在可能不再需要，因为依赖 successUrl)
+    // const checkoutId = data.checkout?.id;
+    // const planType = data.custom_data?.plan || (data.items?.[0]?.price?.type === 'recurring' ? 'monthly' : 'annual');
     
-    if (checkoutId) {
-        console.log('Storing checkoutId to localStorage:', checkoutId);
-        localStorage.setItem('aetherflow_pending_checkoutId', checkoutId);
-    } else {
-        console.warn('Could not find checkoutId or transaction_id in checkout.completed event data.');
-    }
-
     // 构建跳转URL (这段代码现在可能不再需要)
     // let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
     
@@ -208,7 +202,7 @@ function handleCheckoutCompleted(data) {
     //     redirectUrl += '&env=sandbox';
     // }
     
-    // 跳转到成功页面 (保持注释掉，依赖 successUrl 设置)
+    // 跳转到成功页面 (注释掉或删除这行，依赖 successUrl 设置)
     // window.location.href = redirectUrl;
     console.log('Paddle checkout.completed event handled. Relying on successUrl for redirect.');
 }
