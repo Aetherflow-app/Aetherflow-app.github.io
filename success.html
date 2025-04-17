@@ -302,40 +302,14 @@
                 // 使用Chrome扩展消息机制
                 const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
                 
-                // 获取用户信息 (从 localStorage, 由 auth.js 设置)
-                const storedUser = localStorage.getItem('aetherflow_user');
-                let userId = null;
-                if (storedUser) {
-                    try {
-                        const user = JSON.parse(storedUser);
-                        userId = user.uid; // 提取用户 ID
-                    } catch (e) {
-                        console.error('解析localStorage用户信息失败:', e);
-                    }
-                }
-                
-                // 获取当前环境
-                const envParam = new URLSearchParams(window.location.search).get('env');
-                const isSandbox = envParam === 'sandbox' || 
-                                envParam === 'test' || 
-                                localStorage.getItem('aetherflow_env') === 'sandbox';
-                const environment = isSandbox ? 'sandbox' : 'production';
-
                 // 准备消息数据
                 const messageData = {
                     type: 'PAYMENT_SUCCESS',
                     checkoutId: checkoutId,
                     planType: planType || 'monthly',
-                    userId: userId, // 添加用户ID
-                    environment: environment, // 添加环境信息
                     timestamp: Date.now()
                 };
                 
-                // 检查 userId 是否获取成功
-                if (!userId) {
-                    console.warn('无法获取用户ID，将发送不带用户ID的支付成功消息');
-                }
-
                 console.log('Attempting to communicate with extension:', messageData);
                 
                 // 尝试发送消息到扩展
