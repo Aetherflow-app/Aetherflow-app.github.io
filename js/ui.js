@@ -9,7 +9,7 @@ function showAuthLoadingToast() {
             <div class="spinner"></div>
         </div>
         <div class="auth-toast-content">
-            <p>从扩展同步登录状态...</p>
+            <p>Syncing login status from extension...</p>
         </div>
     `;
     
@@ -33,8 +33,8 @@ function showAuthSuccessToast() {
     toast.innerHTML = `
         <div class="auth-toast-icon">✓</div>
         <div class="auth-toast-content">
-            <p>登录成功！</p>
-            <p class="auth-toast-subtitle">账号已同步</p>
+            <p>Login Successful!</p>
+            <p class="auth-toast-subtitle">Account synced</p>
         </div>
     `;
     
@@ -58,8 +58,8 @@ function showAuthErrorToast(message) {
     toast.innerHTML = `
         <div class="auth-toast-icon">!</div>
         <div class="auth-toast-content">
-            <p>登录失败</p>
-            <p class="auth-toast-subtitle">${message || '请重试'}</p>
+            <p>Login Failed</p>
+            <p class="auth-toast-subtitle">${message || 'Please try again'}</p>
         </div>
     `;
     
