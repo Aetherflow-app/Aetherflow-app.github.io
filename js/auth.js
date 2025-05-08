@@ -417,27 +417,44 @@ function signInWithGoogle() {
 // 检查URL中的ID令牌并尝试使用后端进行认证
 function handleIdTokenFromUrl() {
     console.log('[Website Auth Debug] 开始检查URL中的ID Token...');
+
     const urlParams = new URLSearchParams(window.location.search);
     const idToken = urlParams.get('idToken');
-    
+
     if (idToken) {
         console.log('[Website Auth Debug] 在URL中找到ID Token，长度:', idToken.length);
+        // 只记录前后部分以保护隐私
         console.log('[Website Auth Debug] ID Token前10个字符:', idToken.substring(0, 10) + '...');
-        
-        // 显示加载状态提示 (依赖 ui.js)
-        if (typeof showAuthLoadingToast === 'function') {
-            showAuthLoadingToast("Syncing login from extension...");
-            console.log('[Website Auth Debug] 显示加载提示');
+
+        // ADD: Determine Cloud Run URL based on hostname
+        let cloudRunUrlBase = '';
+        const hostname = window.location.hostname;
+        console.log('[Website Auth Debug] 当前网页域名:', hostname);
+
+        if (hostname === 'dev.aetherflow-app.com') {
+            // Development environment
+            cloudRunUrlBase = 'https://create-custom-token-dev-303735099560.us-west2.run.app';
+            console.log('[Website Auth Debug] 检测到开发环境，使用开发Cloud Run URL:', cloudRunUrlBase);
+        } else if (hostname === 'aetherflow-app.com') {
+            // Production environment
+            cloudRunUrlBase = 'https://create-custom-token-prod-423266303314.us-west2.run.app';
+            console.log('[Website Auth Debug] 检测到生产环境，使用生产Cloud Run URL:', cloudRunUrlBase);
         } else {
-            console.log("[Website Auth Debug] 正在同步登录...(未找到toast函数)");
+            // Fallback or local development
+            console.warn('[Website Auth Debug] 未知的网页域名或本地开发，使用默认（生产）Cloud Run URL:', 'https://create-custom-token-prod-423266303314.us-west2.run.app');
+            cloudRunUrlBase = 'https://create-custom-token-prod-423266303314.us-west2.run.app'; // Default to production for safety
+            // Depending on needs, you might want to throw an error or handle other local dev scenarios differently
         }
 
-        // 定义后端端点URL (已更新为实际URL)
-        const customTokenEndpoint = 'https://create-custom-token-423266303314.us-west4.run.app/api/create-custom-token'; 
-        console.log('[Website Auth Debug] 准备调用Cloud Run端点:', customTokenEndpoint);
-        
-        // 调用后端函数获取 Custom Token
-        fetch(customTokenEndpoint, {
+        // Construct the full Cloud Run endpoint URL
+        const cloudRunUrl = `${cloudRunUrlBase}/api/create-custom-token`;
+        console.log('[Website Auth Debug] 准备调用Cloud Run端点:', cloudRunUrl);
+
+        // Display loading indicator
+        showLoadingIndicator();
+
+        // Call your Cloud Run endpoint to exchange ID token for Custom token
+        fetch(cloudRunUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
