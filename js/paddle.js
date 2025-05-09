@@ -102,7 +102,7 @@ function openCheckout(planType) {
     };
     
     // 获取URL参数并传递
-    // const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('utm_campaign')) {
         customData.utm_campaign = urlParams.get('utm_campaign');
     }
