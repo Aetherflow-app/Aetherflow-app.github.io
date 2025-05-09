@@ -2,7 +2,8 @@
 
 // Firebase配置和初始化
 function initFirebase() {
-    const firebaseConfig = {
+    // ADD: Define production Firebase config
+    const firebaseConfig_production = {
         apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
         authDomain: "aetherflow-b6459.firebaseapp.com",
         projectId: "aetherflow-b6459",
@@ -11,10 +12,45 @@ function initFirebase() {
         appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
         measurementId: "G-ZD5E2WY22N"
     };
+
+    // ADD: Define development Firebase config
+    const firebaseConfig_development = {
+        apiKey: "AIzaSyBbEGZ5KvIYGtLzdUgayH8kyE2AGstwABc",
+        authDomain: "aetherflow-test.firebaseapp.com",
+        projectId: "aetherflow-test",
+        storageBucket: "aetherflow-test.firebasestorage.app",
+        messagingSenderId: "303735099560",
+        appId: "1:303735099560:web:1cf32bf148082345bdf29d",
+        measurementId: "G-FRD9WK15C4"
+    };
+
+    // ADD: Select Firebase config based on hostname
+    let selectedFirebaseConfig;
+    const hostname = window.location.hostname;
+    console.log('[Firebase Init Debug] 当前网页域名:', hostname);
+
+    if (hostname === 'dev.aetherflow-app.com') {
+        selectedFirebaseConfig = firebaseConfig_development;
+        console.log('[Firebase Init Debug] 检测到开发环境，使用开发Firebase配置:', selectedFirebaseConfig.projectId);
+    } else if (hostname === 'aetherflow-app.com') {
+        selectedFirebaseConfig = firebaseConfig_production;
+        console.log('[Firebase Init Debug] 检测到生产环境，使用生产Firebase配置:', selectedFirebaseConfig.projectId);
+    } else {
+        // Fallback for localhost or other unknown hostnames
+        console.warn('[Firebase Init Debug] 未知的网页域名或本地开发，默认使用生产Firebase配置。 Project ID:', firebaseConfig_production.projectId);
+        selectedFirebaseConfig = firebaseConfig_production; // Default to production for safety
+    }
     
     // 初始化Firebase
     if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+        // MODIFIED: Use selectedFirebaseConfig
+        firebase.initializeApp(selectedFirebaseConfig);
+        console.log('[Firebase Init Debug] Firebase SDK 初始化成功，项目 ID:', selectedFirebaseConfig.projectId);
+    } else {
+        // If already initialized, log which project it was initialized with (though this block might not be hit if init is always first)
+        // This is more for sanity checking if the code path was ever to allow re-initialization or checking existing init.
+        const existingApp = firebase.app();
+        console.log('[Firebase Init Debug] Firebase SDK 已初始化，项目 ID:', existingApp.options.projectId);
     }
     
     // 处理来自URL的ID令牌 (替换旧的 checkForAuthToken)
