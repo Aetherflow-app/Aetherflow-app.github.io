@@ -2,33 +2,24 @@
 
 // 初始化Paddle支付系统
 function initializePaddle() {
-    // 1. 检查URL参数是否有明确的环境指定
-    // const urlParams = new URLSearchParams(window.location.search);
-    // const envParam = urlParams.get('env');
-    
-    // 2. 判断环境
-    // 明确参数指定的环境 > 域名判断环境
-    let useSandbox = false;
+    // Determine environment based on hostname
     const hostname = window.location.hostname;
-    console.log('[Paddle Env Debug] 当前网页域名:', hostname); // For debugging
+    let useSandbox;
 
-    // 如果URL参数明确指定了环境
-    // if (envParam) {
-    //     useSandbox = envParam === 'sandbox' || envParam === 'test';
-    // } else {
-        // 判断开发环境
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'dev.aetherflow-app.com') {
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        hostname === 'dev.aetherflow-app.com' || 
+        hostname.includes('github.dev')) { // Retaining 'github.dev' for potential specific local dev setups
         useSandbox = true;
-        console.log('[Paddle Env Debug] 检测到开发环境/本地环境，使用 Paddle SANDBOX.');
+        console.log(`[Paddle Env Debug] Hostname "${hostname}" matches dev/local criteria. Using SANDBOX.`);
     } else if (hostname === 'aetherflow-app.com') {
         useSandbox = false;
-        console.log('[Paddle Env Debug] 检测到生产环境，使用 Paddle PRODUCTION.');
+        console.log(`[Paddle Env Debug] Hostname "${hostname}" matches production criteria. Using PRODUCTION.`);
     } else {
         // Fallback for any other unknown hostnames
-        console.warn(`[Paddle Env Debug] 未识别的网页域名: '${hostname}'。为安全起见，默认使用 Paddle SANDBOX。`);
-        useSandbox = true; // Default to sandbox for unrecognized hostnames
+        console.warn(`[Paddle Env Debug] Unknown hostname "${hostname}". Defaulting to PRODUCTION Paddle environment for safety.`);
+        useSandbox = false; 
     }
-    // }
     
     // 3. 设置环境和初始化Paddle
     if (useSandbox) {
@@ -160,7 +151,7 @@ function getSuccessUrl(planType, source) {
     let baseUrl;
     
     // 检查环境
-    // const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
+    const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
     
     // 如果是localhost或GitHub Pages，使用相对路径
     if (window.location.hostname === 'localhost' || 
@@ -180,9 +171,9 @@ function getSuccessUrl(planType, source) {
     }
     
     // 添加环境参数（仅在沙盒环境）
-    // if (useSandbox) {
-    //     params.set('env', 'sandbox');
-    // }
+    if (useSandbox) {
+        params.set('env', 'sandbox');
+    }
     
     return baseUrl + '?' + params.toString();
 }
@@ -200,10 +191,10 @@ function handleCheckoutCompleted(data) {
     let redirectUrl = 'success.html?checkout=' + encodeURIComponent(checkoutId) + '&plan=' + planType;
     
     // 添加环境参数（如果需要）
-    // const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
-    // if (useSandbox) {
-    //     redirectUrl += '&env=sandbox';
-    // }
+    const useSandbox = localStorage.getItem('aetherflow_env') === 'sandbox';
+    if (useSandbox) {
+        redirectUrl += '&env=sandbox';
+    }
     
     // 跳转到成功页面
     window.location.href = redirectUrl;
