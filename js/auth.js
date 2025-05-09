@@ -426,7 +426,7 @@ function handleIdTokenFromUrl() {
         // 只记录前后部分以保护隐私
         console.log('[Website Auth Debug] ID Token前10个字符:', idToken.substring(0, 10) + '...');
 
-        // Determine Cloud Run URL based on hostname
+        // ADD: Determine Cloud Run URL based on hostname
         let cloudRunUrlBase = '';
         const hostname = window.location.hostname;
         console.log('[Website Auth Debug] 当前网页域名:', hostname);
@@ -450,17 +450,9 @@ function handleIdTokenFromUrl() {
         const cloudRunUrl = `${cloudRunUrlBase}/api/create-custom-token`;
         console.log('[Website Auth Debug] 准备调用Cloud Run端点:', cloudRunUrl);
 
-        // MODIFIED: Use a safe check for loading indicator function
-        // Display loading status indicator (depends on ui.js or page-specific script)
-         if (typeof showAuthLoadingToast === 'function') {
-             showAuthLoadingToast("Syncing login from extension...");
-             console.log('[Website Auth Debug] 显示加载提示');
-         } else if (typeof showLoadingIndicator === 'function') { // Also check for showLoadingIndicator
-              showLoadingIndicator();
-              console.log('[Website Auth Debug] 显示加载指示器');
-         } else {
-             console.log("[Website Auth Debug] 正在同步登录...(未找到加载提示函数)");
-         }
+        // Display loading indicator
+        // MODIFIED: Comment out for now as it's undefined
+        // showLoadingIndicator(); 
 
         // Call your Cloud Run endpoint to exchange ID token for Custom token
         fetch(cloudRunUrl, {
