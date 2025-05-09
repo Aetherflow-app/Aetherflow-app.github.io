@@ -29,19 +29,9 @@ function initializePaddle() {
         console.log('Using Paddle PRODUCTION environment');
     }
     
-    // Initialize Paddle
-    // Attempt to get current user for pwCustomer
-    const currentUserForPw = typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser : null;
-    const pwCustomerData = {};
-    if (currentUserForPw && currentUserForPw.email) {
-        pwCustomerData.email = currentUserForPw.email;
-        // If you have a Paddle customer ID for the user, you could also add:
-        // pwCustomerData.id = knownPaddleCustomerId;
-    }
-
+    // 初始化Paddle
     Paddle.Initialize({
         token: useSandbox ? 'test_c624a7a4c9993fc8965d9c37db6' : 'live_74080bad93a7d3b962f98a52c93',
-        pwCustomer: pwCustomerData, // Added pwCustomer
         eventCallback: function(eventData) {
             console.log('Paddle event:', eventData);
             
