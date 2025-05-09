@@ -60,6 +60,26 @@ function initFirebase() {
     firebase.auth().onAuthStateChanged(handleAuthStateChanged);
 }
 
+// ADD: Function to get Extension ID based on environment
+function getExtensionIdForEnvironment() {
+    const hostname = window.location.hostname;
+    // TODO: Replace with actual extension IDs
+    const extensionId_production = "ldpadjcdbfndeghcklogoppmbnmphbki"; // Assuming this is the correct production ID from the store
+    const extensionId_development = "ldpadjcdbfndeghcklogoppmbnmphbki";     // Temporarily using prod ID for dev as per user instruction
+
+    if (hostname === 'dev.aetherflow-app.com' || hostname === 'localhost' || hostname === '127.0.0.1') {
+        console.log('[Extension ID Debug] Detected dev environment, using dev extension ID:', extensionId_development);
+        return extensionId_development;
+    } else if (hostname === 'aetherflow-app.com') {
+        console.log('[Extension ID Debug] Detected prod environment, using prod extension ID:', extensionId_production);
+        return extensionId_production;
+    } else {
+        // Fallback for other unknown hostnames, default to production ID for safety, but log a warning
+        console.warn('[Extension ID Debug] Unknown hostname, defaulting to production extension ID:', extensionId_production);
+        return extensionId_production; 
+    }
+}
+
 // 处理认证状态变化
 function handleAuthStateChanged(user) {
     const authButton = document.getElementById('auth-button');

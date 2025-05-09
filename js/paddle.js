@@ -69,6 +69,8 @@ function initializePaddle() {
 
 // 打开结账窗口
 function openCheckout(planType) {
+    const urlParams = new URLSearchParams(window.location.search); // Define urlParams here
+
     // 获取当前已验证的用户
     const currentUser = firebase.auth().currentUser;
     if (!currentUser) {
@@ -93,7 +95,6 @@ function openCheckout(planType) {
     };
     
     // 获取URL参数并传递
-    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('utm_campaign')) {
         customData.utm_campaign = urlParams.get('utm_campaign');
     }
@@ -103,8 +104,7 @@ function openCheckout(planType) {
     
     console.log('Opening Paddle Checkout with data:', { priceId, customData });
     
-    // 打开Paddle结账
-    Paddle.Checkout.open({
+    let checkoutOptions = {
         items: [
             {
                 priceId: priceId,
@@ -121,7 +121,10 @@ function openCheckout(planType) {
             locale: 'en',
             successUrl: getSuccessUrl(planType, source)
         }
-    });
+    };
+
+    // 打开Paddle结账
+    Paddle.Checkout.open(checkoutOptions);
 }
 
 // 根据计划类型获取价格ID
