@@ -223,49 +223,10 @@
             // 应用保存的语言偏好
             applyLanguagePreference();
             
-            // Function to get Extension ID based on environment (copied from js/auth.js for self-sufficiency)
-            function getExtensionIdForEnvironment() {
-                const hostname = window.location.hostname;
-                // TODO: Replace with actual extension IDs if these are not correct or placeholders are still in use
-                const extensionId_production = "ldpadjcdbfndeghcklogoppmbnmphbki"; // Assuming this is the correct production ID from the store
-                const extensionId_development = "ldpadjcdbfndeghcklogoppmbnmphbki";     // Temporarily using prod ID for dev as per user instruction
-
-                if (hostname === 'dev.aetherflow-app.com' || hostname === 'localhost' || hostname === '127.0.0.1') {
-                    console.log('[Success Page Ext ID Debug] Detected dev environment, using dev extension ID:', extensionId_development);
-                    return extensionId_development;
-                } else if (hostname === 'aetherflow-app.com') {
-                    console.log('[Success Page Ext ID Debug] Detected prod environment, using prod extension ID:', extensionId_production);
-                    return extensionId_production;
-                } else {
-                    console.warn('[Success Page Ext ID Debug] Unknown hostname, defaulting to production extension ID:', extensionId_production);
-                    return extensionId_production; 
-                }
-            }
-
-            // Update Extension Link
-            try {
-                const dynamicExtensionId = getExtensionIdForEnvironment();
-                const extensionBaseUrl = `chrome-extension://${dynamicExtensionId}/pages/sidepanel/index.html`;
-                
-                const openExtensionBtn = document.getElementById('open-extension-btn');
-                const openExtensionBtnZh = document.getElementById('open-extension-btn-zh');
-                
-                if (openExtensionBtn) {
-                    openExtensionBtn.href = extensionBaseUrl;
-                    console.log('[Success Page Ext ID Debug] Updated English button href to:', extensionBaseUrl);
-                }
-                if (openExtensionBtnZh) {
-                    openExtensionBtnZh.href = extensionBaseUrl;
-                    console.log('[Success Page Ext ID Debug] Updated Chinese button href to:', extensionBaseUrl);
-                }
-            } catch (e) {
-                console.error('[Success Page Ext ID Debug] Error updating extension link:', e);
-            }
-
             // 初始化Firebase
             if (typeof firebase !== 'undefined') {
-                // Define production Firebase config
-                const firebaseConfig_production = {
+                // 配置并初始化Firebase
+                const firebaseConfig = {
                     apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
                     authDomain: "aetherflow-b6459.firebaseapp.com",
                     projectId: "aetherflow-b6459",
@@ -274,55 +235,9 @@
                     appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
                     measurementId: "G-ZD5E2WY22N"
                 };
-
-                // Define development Firebase config
-                const firebaseConfig_development = {
-                    apiKey: "AIzaSyBbEGZ5KvIYGtLzdUgayH8kyE2AGstwABc",
-                    authDomain: "aetherflow-test.firebaseapp.com",
-                    projectId: "aetherflow-test",
-                    storageBucket: "aetherflow-test.firebasestorage.app",
-                    messagingSenderId: "303735099560",
-                    appId: "1:303735099560:web:1cf32bf148082345bdf29d",
-                    measurementId: "G-FRD9WK15C4"
-                };
-
-                // Select Firebase config based on hostname
-                let selectedFirebaseConfig;
-                const hostname = window.location.hostname;
-                console.log('[Success Page Firebase Init Debug] 当前网页域名:', hostname);
-
-                if (hostname === 'dev.aetherflow-app.com' || hostname === 'localhost' || hostname === '127.0.0.1') {
-                    selectedFirebaseConfig = firebaseConfig_development;
-                    console.log('[Success Page Firebase Init Debug] 检测到开发环境，使用开发Firebase配置:', selectedFirebaseConfig.projectId);
-                } else if (hostname === 'aetherflow-app.com') {
-                    selectedFirebaseConfig = firebaseConfig_production;
-                    console.log('[Success Page Firebase Init Debug] 检测到生产环境，使用生产Firebase配置:', selectedFirebaseConfig.projectId);
-                } else {
-                    // Fallback for other unknown hostnames
-                    console.warn('[Success Page Firebase Init Debug] 未知的网页域名，默认使用生产Firebase配置。 Project ID:', firebaseConfig_production.projectId);
-                    selectedFirebaseConfig = firebaseConfig_production; // Default to production for safety
-                }
                 
                 if (!firebase.apps.length) {
-                    firebase.initializeApp(selectedFirebaseConfig);
-                    console.log('[Success Page Firebase Init Debug] Firebase SDK 初始化成功，项目 ID:', selectedFirebaseConfig.projectId);
-                } else {
-                    const existingApp = firebase.app();
-                    // Check if the existing app's project ID matches the one we intended to initialize with.
-                    // This is important because another script (like auth.js) might have already initialized Firebase.
-                    // We only re-initialize if it's a *different* project or not initialized at all.
-                    // However, simple re-initialization with the same config is harmless.
-                    // For clarity, we log if it was already initialized.
-                    if (existingApp.options.projectId !== selectedFirebaseConfig.projectId) {
-                        // This case should ideally not happen if all scripts use consistent env detection.
-                        // If it does, it indicates a potential conflict or mixed-environment issue.
-                        console.warn(`[Success Page Firebase Init Debug] Firebase SDK 已被初始化为项目 ${existingApp.options.projectId}, 但当前环境期望项目 ${selectedFirebaseConfig.projectId}. 可能会导致问题.`);
-                        // Optionally, re-initialize with the correct one, though this can be tricky:
-                        // firebase.app().delete().then(() => firebase.initializeApp(selectedFirebaseConfig));
-                        // For now, we'll just log the discrepancy.
-                    } else {
-                        console.log('[Success Page Firebase Init Debug] Firebase SDK 已初始化为正确的项目 ID:', existingApp.options.projectId);
-                    }
+                    firebase.initializeApp(firebaseConfig);
                 }
                 
                 // 监听认证状态变化
