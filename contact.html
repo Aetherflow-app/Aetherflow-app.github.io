@@ -99,7 +99,8 @@
         }
         
         .form-group input,
-        .form-group textarea {
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--gray-light);
@@ -110,7 +111,8 @@
         }
         
         .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
@@ -141,6 +143,15 @@
         .submit-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+        }
+        
+        .google-form-container {
+            width: 100%;
+        }
+        
+        .google-form-container iframe {
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
         }
         
         @media (max-width: 768px) {
@@ -221,30 +232,20 @@
                 </div>
                 
                 <div class="contact-form">
-                    <h2>Send Us a Message</h2>
-                    <form id="contactForm" action="https://formspree.io/f/xbjvqpge" method="POST">
-                        <div class="form-group">
-                            <label for="name">Name <span class="required">*</span></label>
-                            <input type="text" id="name" name="name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="subject">Subject <span class="required">*</span></label>
-                            <input type="text" id="subject" name="subject" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="message">Message <span class="required">*</span></label>
-                            <textarea id="message" name="message" required></textarea>
-                        </div>
-                        
-                        <button type="submit" class="submit-button">Send Message</button>
-                    </form>
+                    <h2>Get in touch</h2>
+                    <p>Have some ideas or need help? Reach out to us — we're eager to hear from you and offer our support.</p>
+                    
+                    <!-- Google Forms 嵌入区域 -->
+                    <div class="google-form-container">
+                        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdzFUqUKKuhyOiYF-grawS6EDmkI3vzccrqO--wMfjKScobjg/viewform?embedded=true" 
+                                width="100%" 
+                                height="1200" 
+                                frameborder="0" 
+                                marginheight="0" 
+                                marginwidth="0">
+                            Loading…
+                        </iframe>
+                    </div>
                 </div>
             </div>
         </div>

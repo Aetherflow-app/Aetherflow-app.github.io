@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetherflow - Analytics Dashboard</title>
+    <meta name="description" content="Aetherflow analytics dashboard provides insights into user activity and product usage.">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="assets/logo-P-svg.svg" alt="Aetherflow Logo" class="logo-icon">
+                <h1>Aetherflow</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="terms-of-service.html">Terms</a></li>
+                    <li><a href="privacy-policy.html">Privacy</a></li>
+                    <li><a href="refund-policy.html">Refunds</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="#" id="auth-button" class="auth-button">Sign in</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div id="access-denied" class="container" style="padding: 5rem 0; text-align: center; display: none;">
+        <h2>Access Denied</h2>
+        <p>You don't have permission to access this dashboard. Please sign in with an admin account.</p>
+        <button id="auth-prompt" class="btn btn-primary">Sign In</button>
+    </div>
+
+    <section id="dashboard-content" class="dashboard-content" style="display: none;">
+        <div class="container">
+            <h1>Analytics Dashboard</h1>
+            <p class="dashboard-description">View real-time insights about user activity and product performance.</p>
+            
+            <div class="dashboard-filters">
+                <div class="filter-group">
+                    <label for="time-range">Time Range</label>
+                    <select id="time-range" class="dashboard-select">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All time</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- Growth Metrics -->
+                <div class="dashboard-card">
+                    <h3>Growth Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-value" id="total-users">-</span>
+                            <span class="metric-label">Total Users</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="new-users">-</span>
+                            <span class="metric-label">New Users</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="conversion-rate">-</span>
+                            <span class="metric-label">Conversion Rate</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="growth-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Engagement Metrics -->
+                <div class="dashboard-card">
+                    <h3>Engagement Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-value" id="active-users">-</span>
+                            <span class="metric-label">Active Users</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="retention-rate">-</span>
+                            <span class="metric-label">Retention Rate</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="avg-session">-</span>
+                            <span class="metric-label">Avg. Session</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="engagement-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Feature Usage -->
+                <div class="dashboard-card">
+                    <h3>Feature Usage</h3>
+                    <div class="chart-container">
+                        <canvas id="feature-usage-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Revenue Metrics -->
+                <div class="dashboard-card">
+                    <h3>Revenue Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-value" id="pro-users">-</span>
+                            <span class="metric-label">Pro Users</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="monthly-revenue">-</span>
+                            <span class="metric-label">Monthly Revenue</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-value" id="annual-revenue">-</span>
+                            <span class="metric-label">Annual Revenue</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenue-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- User Feedback -->
+                <div class="dashboard-card wide-card">
+                    <h3>Recent User Feedback</h3>
+                    <div class="feedback-container" id="feedback-container">
+                        <p class="loading-message">Loading feedback data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>Aetherflow</h2>
+                    <p>Your Prompts, All In One Place. Everywhere.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="refund-policy.html">Refund Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id">Chrome Store</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p>Email: godcorn001@gmail.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Aetherflow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Load modular JavaScript files -->
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/dashboard.js"></script>
+</body>
+</html> 

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorry to see you go - AetherFlow</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .uninstall-container {
+            max-width: 600px;
+            margin: 80px auto;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .uninstall-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            opacity: 0.6;
+        }
+        
+        .uninstall-title {
+            font-size: 28px;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        .uninstall-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        
+        .feedback-form {
+            text-align: left;
+            margin: 32px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .checkbox-item:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-color-10);
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .checkbox-label {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        
+        .textarea-field {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+        }
+        
+        .textarea-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-color-10);
+        }
+        
+        .submit-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 12px;
+        }
+        
+        .submit-btn:hover {
+            background: var(--primary-color-dark);
+            transform: translateY(-1px);
+        }
+        
+        .submit-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .skip-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .skip-btn:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+        
+        .thank-you-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .thank-you-message.show {
+            display: block;
+        }
+        
+        .thank-you-title {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        .thank-you-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="uninstall-container">
+        <div id="feedback-form" class="feedback-content">
+            <!-- AetherFlow Logo -->
+            <div class="uninstall-icon">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M32 8L8 24v24l24 16 24-16V24L32 8z" fill="currentColor" opacity="0.6"/>
+                    <path d="M32 20L20 28v16l12 8 12-8V28L32 20z" fill="currentColor" opacity="0.8"/>
+                </svg>
+            </div>
+            
+            <h1 class="uninstall-title">Sorry to see you go</h1>
+            <p class="uninstall-subtitle">
+                We're disappointed that AetherFlow didn't meet your expectations. 
+                Your feedback would help us improve for future users.
+            </p>
+            
+            <form class="feedback-form" id="uninstallForm">
+                <div class="form-group">
+                    <label class="form-label">What made you uninstall AetherFlow? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="not_useful">
+                            <span class="checkbox-label">The extension wasn't useful for my workflow</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="too_complex">
+                            <span class="checkbox-label">Too complex or hard to use</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="performance_issues">
+                            <span class="checkbox-label">Performance issues or bugs</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="privacy_concerns">
+                            <span class="checkbox-label">Privacy or security concerns</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="found_alternative">
+                            <span class="checkbox-label">Found a better alternative</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="limited_features">
+                            <span class="checkbox-label">Missing features I needed</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="pricing">
+                            <span class="checkbox-label">Pricing concerns</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="reasons" value="other">
+                            <span class="checkbox-label">Other reason</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="comments">Additional comments (optional)</label>
+                    <textarea 
+                        id="comments" 
+                        name="comments" 
+                        class="textarea-field" 
+                        placeholder="Tell us more about your experience or what we could improve..."
+                    ></textarea>
+                </div>
+                
+                <div style="text-align: center; margin-top: 32px;">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Send Feedback
+                    </button>
+                    <button type="button" class="skip-btn" id="skipBtn">
+                        Skip
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="thank-you" class="thank-you-message">
+            <h2 class="thank-you-title">Thank you for your feedback!</h2>
+            <p class="thank-you-text">
+                We appreciate you taking the time to share your thoughts. 
+                Your input helps us make AetherFlow better for everyone.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 解析URL参数
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                source: params.get('source') || 'unknown',
+                version: params.get('version') || 'unknown',
+                timestamp: params.get('timestamp') || Date.now().toString(),
+                previousVersion: params.get('previous_version') || null
+            };
+        }
+
+        // 发送卸载埋点数据
+        async function trackUninstall(reasons = [], comments = '', skipped = false) {
+            const urlParams = getUrlParams();
+            
+            const uninstallData = {
+                eventType: 'extension_uninstalled',
+                timestamp: Date.now(),
+                metadata: {
+                    source: urlParams.source,
+                    version: urlParams.version,
+                    previousVersion: urlParams.previousVersion,
+                    uninstallTimestamp: urlParams.timestamp,
+                    feedbackProvided: !skipped,
+                    reasons: reasons,
+                    comments: comments || null,
+                    userAgent: navigator.userAgent,
+                    pageUrl: window.location.href,
+                    // 计算大致的使用时长（从安装到卸载）
+                    usageDuration: urlParams.timestamp ? Date.now() - parseInt(urlParams.timestamp) : null
+                }
+            };
+
+            try {
+                console.log('Uninstall tracking data:', uninstallData);
+                
+                // 方案1: 发送到Firebase Firestore
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    try {
+                        const docRef = await firebase.firestore()
+                            .collection('analytics')
+                            .collection('events')
+                            .add({
+                                ...uninstallData,
+                                userId: null, // 用户已卸载，通常无法获取userId
+                                sessionId: 'uninstall_session_' + Date.now(),
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        console.log('Uninstall data saved to Firestore successfully, doc ID:', docRef.id);
+                        return true;
+                    } catch (firestoreError) {
+                        console.error('Failed to save to Firestore:', firestoreError);
+                        // 如果是权限错误，显示具体信息
+                        if (firestoreError.code === 'permission-denied') {
+                            console.error('Permission denied - please check Firestore rules');
+                        }
+                        // 降级到其他方案
+                        return await fallbackTracking(uninstallData);
+                    }
+                } else {
+                    console.warn('Firebase not available, using fallback tracking');
+                    // Firebase未加载，使用降级方案
+                    return await fallbackTracking(uninstallData);
+                }
+            } catch (error) {
+                console.error('Failed to track uninstall:', error);
+                return await fallbackTracking(uninstallData);
+            }
+        }
+
+        // 降级跟踪方案
+        async function fallbackTracking(uninstallData) {
+            let success = false;
+            
+            // 方案2: 发送到Google Analytics（如果已配置）
+            if (typeof gtag !== 'undefined') {
+                try {
+                    gtag('event', 'extension_uninstalled', {
+                        event_category: 'extension_lifecycle',
+                        event_label: uninstallData.metadata.version,
+                        custom_parameters: uninstallData.metadata
+                    });
+                    console.log('Sent to Google Analytics');
+                    success = true;
+                } catch (gaError) {
+                    console.error('Failed to send to Google Analytics:', gaError);
+                }
+            }
+            
+            // 方案3: 发送到自定义API端点（如果有）
+            // 注意：这里暂时注释掉，因为还没有自定义API端点
+            /*
+            const API_ENDPOINT = 'https://your-api-domain.com/api/analytics/uninstall';
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(uninstallData),
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    console.log('Uninstall data sent to API successfully');
+                    success = true;
+                } else {
+                    console.warn('API responded with error:', response.status);
+                }
+            } catch (apiError) {
+                console.warn('Failed to send to API endpoint:', apiError);
+            }
+            */
+            
+            // 最后的降级方案：保存到localStorage（用户下次访问网站时可以收集）
+            try {
+                const existingData = JSON.parse(localStorage.getItem('aetherflow_uninstall_data') || '[]');
+                existingData.push(uninstallData);
+                localStorage.setItem('aetherflow_uninstall_data', JSON.stringify(existingData));
+                console.log('Uninstall data saved to localStorage as fallback');
+                success = true;
+            } catch (localStorageError) {
+                console.error('Failed to save to localStorage:', localStorageError);
+            }
+            
+            return success;
+        }
+
+        // 处理表单提交
+        document.getElementById('uninstallForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            // 收集选中的原因
+            const checkedReasons = Array.from(document.querySelectorAll('input[name="reasons"]:checked'))
+                .map(checkbox => checkbox.value);
+            
+            // 收集评论
+            const comments = document.getElementById('comments').value.trim();
+            
+            // 发送埋点
+            const success = await trackUninstall(checkedReasons, comments, false);
+            
+            // 显示感谢信息
+            document.getElementById('feedback-form').style.display = 'none';
+            document.getElementById('thank-you').classList.add('show');
+            
+            if (!success) {
+                // 如果发送失败，可以显示一个提示
+                document.querySelector('.thank-you-text').innerHTML = 
+                    'Thank you for your feedback! <br><small>(There was an issue submitting your feedback, but we appreciate your time.)</small>';
+            }
+        });
+
+        // 处理跳过按钮
+        document.getElementById('skipBtn').addEventListener('click', async function() {
+            await trackUninstall([], '', true);
+            document.getElementById('feedback-form').style.display = 'none';
+            document.getElementById('thank-you').classList.add('show');
+            document.querySelector('.thank-you-text').textContent = 
+                'We understand. Thank you for trying AetherFlow!';
+        });
+
+        // 页面加载时记录访问（这本身就是一个卸载事件指标）
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Uninstall page loaded with params:', getUrlParams());
+            
+            // 记录卸载页面访问（无论用户是否填写问卷）
+            await trackUninstall([], '', true); // 先记录访问事件
+        });
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase配置（生产环境）
+        const firebaseConfig = {
+            apiKey: "AIzaSyCulWQxvrzxDOLGOxzi2ngj9n0DwzvqJFw",
+            authDomain: "aetherflow-b6459.firebaseapp.com",
+            projectId: "aetherflow-b6459",
+            storageBucket: "aetherflow-b6459.firebasestorage.app",
+            messagingSenderId: "423266303314",
+            appId: "1:423266303314:web:9cbf8adb847f043bd34e8b",
+            measurementId: "G-ZD5E2WY22N"
+        };
+        
+        // 初始化Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase initialized for uninstall tracking');
+        }
+    </script>
+</body>
+</html> 

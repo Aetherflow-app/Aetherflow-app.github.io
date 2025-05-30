@@ -1,0 +1,58 @@
+{
+  "testimonials": [
+    {
+      "id": 1,
+      "content": "Aetherflow has made my interactions with AI platforms much more efficient. My prompts work better and I save hours every week.",
+      "author": {
+        "name": "Sarah J.",
+        "title": "Content Creator",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=b6e3f4&clothingColor=65a30d"
+      }
+    },
+    {
+      "id": 2,
+      "content": "The prompt optimization feature is incredibly useful! I can get better AI responses with less effort.",
+      "author": {
+        "name": "Michael T.",
+        "title": "Software Developer",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael&backgroundColor=c7d2fe&clothingColor=1e40af"
+      }
+    },
+    {
+      "id": 3,
+      "content": "Cross-device sync has completely transformed my workflow - I can access my prompt library anywhere, anytime.",
+      "author": {
+        "name": "Jessica L.",
+        "title": "Digital Marketer",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica&backgroundColor=fde68a&clothingColor=dc2626"
+      }
+    },
+    {
+      "id": 4,
+      "content": "The one-click save feature is a game changer. I never lose great prompts I find online anymore.",
+      "author": {
+        "name": "David Chen",
+        "title": "Product Manager",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=David&backgroundColor=d8b4fe&clothingColor=059669"
+      }
+    },
+    {
+      "id": 5,
+      "content": "As a writer, Aetherflow helps me maintain consistency in my AI-assisted creative process. Highly recommended!",
+      "author": {
+        "name": "Emma Rodriguez",
+        "title": "Freelance Writer",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=fed7aa&clothingColor=7c2d12"
+      }
+    },
+    {
+      "id": 6,
+      "content": "The Pro optimization feature has dramatically improved my prompt quality. Worth every penny!",
+      "author": {
+        "name": "Alex Thompson",
+        "title": "AI Researcher",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=bbf7d0&clothingColor=4338ca"
+      }
+    }
+  ]
+} 

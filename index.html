@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AetherFlow - AI Prompt Management Chrome Extension</title>
+    <title>Aetherflow - Your Prompts, All In One Place. Everywhere.</title>
+    <meta name="description" content="Your complete prompt toolkit. Save, use, and optimize prompts anywhere, all from one place. The Swiss Army knife for prompts.">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+    
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +26,8 @@
     <header>
         <div class="container">
             <div class="logo">
-                <h1>AetherFlow</h1>
+                <img src="assets/logo-P-svg.svg" alt="Aetherflow Logo" class="logo-icon">
+                <h1>Aetherflow</h1>
             </div>
             <nav>
                 <ul>
@@ -36,103 +46,209 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1>Master Your AI Prompts</h1>
-                <p>AetherFlow helps you store, organize, and optimize your AI prompts for better results with any AI platform</p>
-                <div class="hero-buttons">
-                    <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-primary">Add to Chrome</a>
-                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                <div class="hero-text">
+                    <h1>Your Prompts, All In One Place. Everywhere.</h1>
+                    <p>Your complete prompt toolkit. Save, use, and optimize prompts anywhere, all from one place.</p>
+                    <div class="hero-buttons">
+                        <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-primary">Add to Chrome</a>
+                        <a href="#demo-features" class="btn btn-secondary">See How It Works</a>
+                    </div>
                 </div>
-            </div>
-            <div class="hero-image">
-                <img src="assets/hero-image.png" alt="AetherFlow Chrome Extension" class="primary-image">
-            </div>
-        </div>
-    </section>
-
-    <section class="video-section">
-        <div class="container">
-            <h2>See AetherFlow in Action</h2>
-            <div class="video-container">
-                <div class="video-placeholder" onclick="playDemo()">
-                    <img src="assets/video-thumbnail.png" alt="Demo video thumbnail">
-                    <div class="play-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
-                        </svg>
+                <div class="hero-video">
+                    <div class="video-container-large" id="hero-video-container">
+                        <!-- Video will auto-play here -->
+                        <div class="embed-responsive-large">
+                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/rIrv8omQpvM?autoplay=1&mute=1&loop=1&playlist=rIrv8omQpvM&controls=1&rel=0&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="features" class="features">
+    <section class="value-points">
         <div class="container">
-            <h2>Features That Set Us Apart</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
+            <h2>The Swiss Army Knife for Prompts</h2>
+            <div class="value-grid">
+                <div class="value-card">
+                    <div class="value-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
                         </svg>
                     </div>
                     <h3>Prompt Library</h3>
-                    <p>Store and organize your best prompts in a searchable library for quick access anytime.</p>
+                    <p>Organize and manage all your quality prompts with smart categorization</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9z"></path>
+                            <circle cx="9" cy="9" r="2"></circle>
+                            <path d="M5 12V7a5 5 0 0 1 10 0v12"></path>
+                        </svg>
+                    </div>
+                    <h3>1-Click Save</h3>
+                    <p>Instantly save great prompts from any webpage with a single click</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                    </div>
+                    <h3>Quick Input</h3>
+                    <p>Insert your saved prompts instantly on any website or AI platform</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                             <path d="M2 17l10 5 10-5"></path>
                             <path d="M2 12l10 5 10-5"></path>
                         </svg>
                     </div>
-                    <h3>AI Optimization</h3>
-                    <p>Analyze and improve your prompts using our AI algorithm for better results.</p>
+                    <h3>Quick Optimize</h3>
+                    <p>AI-powered prompt optimization to enhance your results instantly</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
+                <div class="value-card">
+                    <div class="value-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
                     </div>
-                    <h3>Quick Input</h3>
-                    <p>Use keyboard shortcuts to instantly insert your saved prompts into any text field.</p>
+                    <h3>Pro Optimize</h3>
+                    <p>Advanced optimization with deep analysis and improvement suggestions</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
+                <div class="value-card">
+                    <div class="value-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l7-4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                             <line x1="12" y1="22.08" x2="12" y2="12"></line>
                         </svg>
                     </div>
                     <h3>Cross-device Sync</h3>
-                    <p>Access your prompt library from any device with seamless cloud synchronization.</p>
+                    <p>Access your prompt library anytime, anywhere across all devices</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="how-it-works">
+    <section id="demo-features" class="demo-features">
         <div class="container">
-            <h2>How AetherFlow Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Save Your Prompts</h3>
-                    <p>Capture your most effective AI prompts from any website with one click.</p>
+            <h2>Core Features in Action</h2>
+            
+            <!-- Feature 1: Prompt Library -->
+            <div class="demo-item">
+                <div class="demo-text">
+                    <h3>📚 Prompt Library - Your AI Assistant Treasure</h3>
+                    <p><strong>Feature Value:</strong> No more typing the same prompts repeatedly! Build your personal prompt library, categorize all quality prompts, and make every AI conversation more efficient.</p>
+                    <div class="operation-guide">
+                        <h4>💡 How to Use:</h4>
+                        <ul>
+                            <li>Click the extension icon to open the sidebar</li>
+                            <li>Browse and manage in "My Prompts"</li>
+                            <li>Use tags for categorization and quick search</li>
+                            <li>Favorite frequently used prompts</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Optimize & Refine</h3>
-                    <p>Use our AI-powered tools to analyze and improve your prompt effectiveness.</p>
+                <div class="demo-gif-large">
+                    <img src="assets/1-提示词库.gif" alt="Prompt Library Feature Demo" loading="lazy">
                 </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Reuse Instantly</h3>
-                    <p>Insert your saved prompts anywhere with simple keyboard shortcuts.</p>
+            </div>
+
+            <!-- Feature 2: 1-Click Save -->
+            <div class="demo-item reverse">
+                <div class="demo-text">
+                    <h3>📎 1-Click Save - Capture Great Prompts Instantly</h3>
+                    <p><strong>Feature Value:</strong> Found a great prompt while browsing? Save it to your library with one click! Whether it's from social media, tech blogs, or AI tool websites, never miss good content again.</p>
+                    <div class="operation-guide">
+                        <h4>💡 How to Use:</h4>
+                        <ul>
+                            <li>Select the prompt text on any webpage</li>
+                            <li>Right-click and choose "Save to Aetherflow"</li>
+                            <li>Or use the shortcut Ctrl+Shift+S</li>
+                            <li>Add tags and descriptions for easy management</li>
+                        </ul>
+                    </div>
                 </div>
+                <div class="demo-gif-large">
+                    <img src="assets/2-剪藏.gif" alt="1-Click Save Feature Demo" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Feature 3: Quick Input -->
+            <div class="demo-item">
+                <div class="demo-text">
+                    <h3>⚡ Quick Input - Use Anywhere, Anytime</h3>
+                    <p><strong>Feature Value:</strong> Whether on ChatGPT, Claude, or any AI platform, quickly insert your saved prompts. Say goodbye to copy-pasting and boost your productivity!</p>
+                    <div class="operation-guide">
+                        <h4>💡 How to Use:</h4>
+                        <ul>
+                            <li>Use shortcut Ctrl+Space in any input field</li>
+                            <li>Select the prompt you need</li>
+                            <li>Automatically inserts at current cursor position</li>
+                            <li>Supports variable replacement and custom editing</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="demo-gif-large">
+                    <img src="assets/3-快捷输入.gif" alt="Quick Input Feature Demo" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Feature 4: Quick Optimize -->
+            <div class="demo-item reverse">
+                <div class="demo-text">
+                    <h3>🚀 Quick Optimize - AI-Powered Prompt Enhancement</h3>
+                    <p><strong>Feature Value:</strong> Let AI help optimize your prompts! Through intelligent analysis, make your prompts clearer, more effective, and more likely to get satisfying responses.</p>
+                    <div class="operation-guide">
+                        <h4>💡 How to Use:</h4>
+                        <ul>
+                            <li>Select the prompt you want to optimize</li>
+                            <li>Click the "Quick Optimize" button</li>
+                            <li>AI automatically analyzes and provides optimization suggestions</li>
+                            <li>Apply optimization results with one click</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="demo-gif-large">
+                    <img src="assets/4-快捷优化.gif" alt="Quick Optimize Feature Demo" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Feature 5: Pro Optimize -->
+            <div class="demo-item">
+                <div class="demo-text">
+                    <h3>⚙️ Pro Optimize - Deep Customization for Your Prompts</h3>
+                    <p><strong>Feature Value:</strong> More than simple optimization! Through the sidebar's professional tools, deeply analyze prompt structure and provide detailed improvement suggestions with multiple optimization options.</p>
+                    <div class="operation-guide">
+                        <h4>💡 How to Use:</h4>
+                        <ul>
+                            <li>Open the Aetherflow sidebar</li>
+                            <li>Paste or input your prompt</li>
+                            <li>Choose optimization goals (creativity, logic, efficiency, etc.)</li>
+                            <li>Get detailed optimization analysis and suggestions</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="demo-gif-large">
+                    <img src="assets/5-侧边栏优化.gif" alt="Pro Optimize Feature Demo" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <h2>What Our Users Say</h2>
+            <div class="testimonial-slider" id="testimonial-slider">
+                <!-- Testimonials will be loaded dynamically from JSON -->
             </div>
         </div>
     </section>
@@ -203,46 +319,11 @@
         </div>
     </section>
 
-    <section class="testimonials">
-        <div class="container">
-            <h2>What Our Users Say</h2>
-            <div class="testimonial-slider">
-                <div class="testimonial">
-                    <div class="testimonial-content">
-                        <p>"AetherFlow has transformed how I interact with AI platforms. My prompts are more effective and I save hours every week."</p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-name">Sarah J.</div>
-                        <div class="author-title">Content Creator</div>
-                    </div>
-                </div>
-                <div class="testimonial">
-                    <div class="testimonial-content">
-                        <p>"The prompt optimization feature alone is worth the subscription. I get better AI responses with much less effort."</p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-name">Michael T.</div>
-                        <div class="author-title">Software Developer</div>
-                    </div>
-                </div>
-                <div class="testimonial">
-                    <div class="testimonial-content">
-                        <p>"Being able to sync my prompts across devices has been a game-changer for my workflow."</p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-name">Jessica L.</div>
-                        <div class="author-title">Digital Marketer</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <section class="cta">
         <div class="container">
-            <h2>Ready to Transform Your AI Experience?</h2>
-            <p>Join thousands of users who are getting better results with AetherFlow</p>
-            <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-large">Add to Chrome - It's Free</a>
+            <h2>Ready to Supercharge Your AI Experience?</h2>
+            <p>Join thousands of users who've already transformed their AI workflow with Aetherflow</p>
+            <a href="https://chrome.google.com/webstore/detail/aetherflow/extension-id" class="btn btn-large">Add to Chrome for Free</a>
         </div>
     </section>
 
@@ -250,8 +331,8 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <h2>AetherFlow</h2>
-                    <p>AI Prompt Management Chrome Extension</p>
+                    <h2>Aetherflow</h2>
+                    <p>Your Prompts, All In One Place. Everywhere.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Legal</h4>
@@ -275,7 +356,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 AetherFlow. All rights reserved.</p>
+                <p>&copy; 2024 Aetherflow. All rights reserved.</p>
             </div>
         </div>
     </footer>
