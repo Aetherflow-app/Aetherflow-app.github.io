@@ -44,45 +44,62 @@ function parseInviteParams() {
 }
 
 /**
- * 验证邀请码有效性
+ * 验证邀请码 - 通过调用Cloud Run后端服务
  */
 async function validateInviteCode(code) {
     console.log('[Invite] 开始验证邀请码:', code);
-    
+    const cloudRunUrl = 'https://validate-invite-code-423266303314.us-west2.run.app/validate'; // 你的Cloud Run URL
+
     try {
-        const db = firebase.firestore();
-        
-        // 查询所有用户文档，寻找匹配的邀请码
-        const usersQuery = await db.collection('users')
-            .where('inviteCode', '==', code)
-            .limit(1)
-            .get();
-        
-        if (!usersQuery.empty) {
-            // 找到匹配的邀请人
-            const inviterDoc = usersQuery.docs[0];
-            inviterUserId = inviterDoc.id;
+        const response = await fetch(`${cloudRunUrl}?code=${code}`);
+        const data = await response.json();
+
+        if (response.ok && data.isValid) {
+            inviterUserId = data.inviterUserId;
             isValidInvite = true;
             
-            console.log('[Invite] 邀请码验证成功，邀请人ID:', inviterUserId);
-            showValidInviteState();
+            // 可选：存储邀请人信息以备显示
+            const inviterDetails = {
+                name: data.inviterName,
+                photoURL: data.inviterPhotoURL
+            };
+
+            console.log('[Invite] 邀请码验证成功，邀请人ID:', inviterUserId, '邀请人信息:', inviterDetails);
+            showValidInviteState(inviterDetails); // 传递邀请人信息
         } else {
-            console.log('[Invite] 邀请码无效');
+            console.log('[Invite] 邀请码无效或验证出错:', data.error || 'Unknown error');
             showInvalidInviteState();
         }
     } catch (error) {
-        console.error('[Invite] 验证邀请码时出错:', error);
-        showInvalidInviteState();
+        console.error('[Invite] 调用验证服务时出错:', error);
+        showInvalidInviteState(); // 网络错误或其他 fetch 错误
     }
 }
 
 /**
  * 显示有效邀请状态
  */
-function showValidInviteState() {
+function showValidInviteState(inviterDetails = null) { // 接收邀请人信息
     document.getElementById('invite-valid').style.display = 'block';
     document.getElementById('invite-invalid').style.display = 'none';
     document.getElementById('success-state').style.display = 'none';
+
+    // 可选: 更新页面以显示邀请人信息
+    // 你需要在HTML中准备好相应的元素，例如 <span id="inviter-name"></span>
+    if (inviterDetails && inviterDetails.name) {
+        const inviterNameElement = document.getElementById('inviter-name-placeholder'); // 假设你有这样一个元素
+        if (inviterNameElement) {
+            inviterNameElement.textContent = inviterDetails.name;
+        }
+        // 类似地处理 photoURL (例如更新一个 <img> 标签的 src)
+        console.log("[Invite] 邀请人姓名已更新到页面: ", inviterDetails.name);
+    } else {
+        // 如果没有邀请人姓名，确保占位符是通用的
+        const inviterNameElement = document.getElementById('inviter-name-placeholder'); 
+        if (inviterNameElement) {
+            inviterNameElement.textContent = "Your friend"; // 默认文本
+        }
+    }
 }
 
 /**
