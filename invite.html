@@ -86,12 +86,27 @@
         }
         
         .invite-container {
-            max-width: 650px;
+            max-width: 900px;
             width: 100%;
             background: #fff;
             padding: 30px 40px 40px 40px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        
+        .invite-main-content {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .invite-column-left {
+            flex: 1;
+        }
+        
+        .invite-column-right {
+            flex: 1.2;
         }
         
         .invite-icon {
@@ -112,8 +127,8 @@
             background: #f8fafc;
             border-radius: 12px;
             padding: 24px;
-            margin-bottom: 30px;
             border: 1px solid #e2e8f0;
+            height: 100%;
         }
         
         .product-preview h3 {
@@ -139,9 +154,9 @@
             background: #fff;
             border-radius: 12px;
             padding: 30px;
-            margin-bottom: 30px;
             border: 2px solid #4F46E5;
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+            height: 100%;
         }
         
         .signup-title {
@@ -255,6 +270,19 @@
         .invite-invalid .invite-icon {
             color: #F59E0B;
         }
+        
+        @media (max-width: 768px) {
+            .invite-main-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .invite-container {
+                padding: 20px;
+            }
+            .invite-title {
+                font-size: 22px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -284,39 +312,44 @@
                     <div class="invite-icon">🎉</div>
                     <h1 class="invite-title">Your friend invited you to join AetherFlow!</h1>
                     
-                    <div class="product-preview">
-                        <h3>What you'll get access to:</h3>
-                        <ul class="feature-list">
-                            <li>✨ Smart prompt organization system</li>
-                            <li>🚀 AI-powered prompt optimization</li>
-                            <li>⚡ Quick prompt insertion anywhere</li>
-                            <li>☁️ Cross-device synchronization</li>
-                            <li>📚 Curated prompt library</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="signup-section">
-                        <h2 class="signup-title">Accept Your Invitation</h2>
-                        <div class="reward-highlight">
-                            🎁 Special Gift: 3 days of Pro membership - completely free!
+                    <div class="invite-main-content">
+                        <div class="invite-column-left">
+                            <div class="product-preview">
+                                <h3>What you'll get access to:</h3>
+                                <ul class="feature-list">
+                                    <li>✨ Smart prompt organization system</li>
+                                    <li>🚀 AI-powered prompt optimization</li>
+                                    <li>⚡ Quick prompt insertion anywhere</li>
+                                    <li>☁️ Cross-device synchronization</li>
+                                    <li>📚 Curated prompt library</li>
+                                </ul>
+                            </div>
                         </div>
-                        
-                        <div class="auth-buttons">
-                            <button id="google-signup-btn" class="google-btn">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                                Accept with Google
-                            </button>
-                            <button id="email-signup-btn" class="email-signup-btn">
-                                Accept with Email
-                            </button>
-                        </div>
-                        
-                        <div class="loading-state" id="loading-state">
-                            Creating your account and activating your Pro benefits...
-                        </div>
-                        
-                        <div class="error-state" id="error-state">
-                            Something went wrong. Please try again.
+                        <div class="invite-column-right">
+                            <div class="signup-section">
+                                <h2 class="signup-title">Accept Your Invitation</h2>
+                                <div class="reward-highlight">
+                                    🎁 Special Gift: 3 days of Pro membership - completely free!
+                                </div>
+                                
+                                <div class="auth-buttons">
+                                    <button id="google-signup-btn" class="google-btn">
+                                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                                        Accept with Google
+                                    </button>
+                                    <button id="email-signup-btn" class="email-signup-btn">
+                                        Accept with Email
+                                    </button>
+                                </div>
+                                
+                                <div class="loading-state" id="loading-state">
+                                    Creating your account and activating your Pro benefits...
+                                </div>
+                                
+                                <div class="error-state" id="error-state">
+                                    Something went wrong. Please try again.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
