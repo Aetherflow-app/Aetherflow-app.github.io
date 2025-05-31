@@ -291,6 +291,9 @@ async function handleNewUserRegistration(user) {
             // 3. 调用Cloud Run API实际发放奖励（仅限有效邀请）
             await processWelcomeRewards(user.uid);
             
+            // 4. 调用新的后端服务更新邀请人任务状态
+            await processInviteSuccess(inviterUserId, user.uid, inviteCode);
+            
             // 显示成功状态（有奖励）
             showSuccessState(true);
         } else {
@@ -331,20 +334,9 @@ async function handleInviteRewards(user, batch, timestamp) {
             inviteCode: inviteCode,
             invitedEmail: user.email,
             createdAt: timestamp,
-            status: 'completed', // 初始状态，可由后端更新
+            status: 'completed',
             ipAddress: await getClientIP()
         });
-        
-        // TODO: 后端处理 - 检查邀请人任务状态和限制
-        // const shouldUpdateInviterTask = await checkInviterEligibility(inviterUserId);
-        // if (shouldUpdateInviterTask) {
-        //     // 更新邀请人的任务状态的逻辑也应移至后端
-        //     // const inviterTaskRef = db.collection('users').doc(inviterUserId)
-        //     //     .collection('rewards_tasks').doc('friendInvite');
-        //     // ... (获取当前进度并更新) ...
-        //     // batch.set(inviterTaskRef, { ... }, { merge: true });
-        //     console.warn('[Invite] 更新邀请人任务状态的逻辑需要在后端实现。');
-        // }
         
         // 2. 给被邀请人发放欢迎奖励 (写入队列)
         await addWelcomeBonusToQueue(user.uid, batch, timestamp);
@@ -352,8 +344,6 @@ async function handleInviteRewards(user, batch, timestamp) {
     } catch (error) {
         console.error('[Invite] 处理邀请奖励时出错 (前端部分):', error);
         // 即使邀请奖励处理失败，也要确保被邀请人的奖励队列写入尝试过
-        // 错误可能来自 getClientIP 或其他意外情况
-        // 重要的是核心用户数据写入成功
         await addWelcomeBonusToQueue(user.uid, batch, timestamp); // 再次尝试确保队列写入
     }
 }
@@ -465,6 +455,68 @@ async function addWelcomeBonusToQueue(userId, batch, timestamp) {
     
     // 注意：实际的奖励处理（调用Cloud Run API）将在batch.commit()之后进行
     // 这里先写入队列，后续通过Cloud Run处理实际的会员状态更新
+}
+
+/**
+ * 调用后端服务处理邀请成功逻辑
+ */
+async function processInviteSuccess(inviterUserId, invitedUserId, inviteCode) {
+    console.log('[Invite] 调用后端服务处理邀请成功:', { inviterUserId, invitedUserId, inviteCode });
+    
+    try {
+        // 获取用户的Firebase ID Token
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) {
+            throw new Error('用户未认证');
+        }
+        
+        const idToken = await currentUser.getIdToken();
+        
+        // 确定Cloud Run服务URL
+        const hostname = window.location.hostname;
+        let cloudRunBaseUrl;
+        
+        if (hostname === 'dev.aetherflow-app.com') {
+            // 开发环境 - 需要部署后更新URL
+            cloudRunBaseUrl = 'https://process-invite-success-dev-423266303314.us-west2.run.app';
+        } else {
+            // 生产环境 - 需要部署后更新URL
+            cloudRunBaseUrl = 'https://process-invite-success-423266303314.us-west2.run.app';
+        }
+        
+        // 调用Cloud Run API处理邀请成功
+        const response = await fetch(`${cloudRunBaseUrl}/processInviteSuccess`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+                inviterUserId: inviterUserId,
+                invitedUserId: invitedUserId,
+                inviteCode: inviteCode
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`邀请处理API调用失败: ${response.status} - ${errorData}`);
+        }
+        
+        const result = await response.json();
+        console.log('[Invite] 邀请成功处理结果:', result);
+        
+        if (result.success && result.inviterTaskUpdated) {
+            console.log(`[Invite] 邀请人任务已更新: 进度 ${result.newProgress}, 任务完成: ${result.taskCompleted}`);
+        } else {
+            console.log(`[Invite] 邀请记录成功，但邀请人任务未更新: ${result.message}`);
+        }
+        
+    } catch (error) {
+        console.error('[Invite] 处理邀请成功时出错:', error);
+        // 不抛出错误，因为这不应该影响被邀请人的注册流程
+        // 记录错误供后续排查
+    }
 }
 
 /**
