@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join AetherFlow - Invited by a Friend</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        .invite-container {
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 70vh;
+        }
+        
+        .invite-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .invite-title {
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .invite-subtitle {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            color: #555;
+        }
+        
+        .product-preview {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .product-preview h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin: 0 auto;
+            max-width: 300px;
+        }
+        
+        .feature-list li {
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .signup-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #4F46E5;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+        }
+        
+        .signup-title {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .reward-highlight {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .google-btn:hover {
+            border-color: #4F46E5;
+            background: #f8fafc;
+        }
+        
+        .google-btn img {
+            width: 20px;
+            margin-right: 8px;
+        }
+        
+        .email-signup-btn {
+            padding: 12px 24px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .email-signup-btn:hover {
+            background: #3730A3;
+        }
+        
+        .success-state {
+            display: none;
+        }
+        
+        .success-icon {
+            font-size: 64px;
+            color: #10B981;
+            margin-bottom: 20px;
+        }
+        
+        .download-section {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 30px;
+        }
+        
+        .download-section h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .loading-state {
+            display: none;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error-state {
+            display: none;
+            color: #DC2626;
+            background: #FEF2F2;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        
+        .invite-invalid {
+            display: none;
+        }
+        
+        .invite-invalid .invite-icon {
+            color: #F59E0B;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>AetherFlow</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="terms-of-service.html">Terms</a></li>
+                    <li><a href="privacy-policy.html">Privacy</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="#" id="auth-button" class="auth-button">Sign in</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="invite-section">
+        <div class="container">
+            <div class="invite-container">
+                <!-- 有效邀请状态 -->
+                <div id="invite-valid" class="invite-valid">
+                    <div class="invite-icon">🎉</div>
+                    <h1 class="invite-title">Your friend invited you to join AetherFlow!</h1>
+                    <p class="invite-subtitle">
+                        Great news! You've received a special invitation to try AetherFlow - the AI prompt manager that transforms how you work with AI.
+                    </p>
+                    
+                    <div class="product-preview">
+                        <h3>What you'll get access to:</h3>
+                        <ul class="feature-list">
+                            <li>✨ Smart prompt organization system</li>
+                            <li>🚀 AI-powered prompt optimization</li>
+                            <li>⚡ Quick prompt insertion anywhere</li>
+                            <li>☁️ Cross-device synchronization</li>
+                            <li>📚 Curated prompt library</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="signup-section">
+                        <h2 class="signup-title">Accept Your Invitation</h2>
+                        <div class="reward-highlight">
+                            🎁 Special Gift: 3 days of Pro membership - completely free!
+                        </div>
+                        
+                        <div class="auth-buttons">
+                            <button id="google-signup-btn" class="google-btn">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                                Accept with Google
+                            </button>
+                            <button id="email-signup-btn" class="email-signup-btn">
+                                Accept with Email
+                            </button>
+                        </div>
+                        
+                        <div class="loading-state" id="loading-state">
+                            Creating your account and activating your Pro benefits...
+                        </div>
+                        
+                        <div class="error-state" id="error-state">
+                            Something went wrong. Please try again.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 无效邀请状态 -->
+                <div id="invite-invalid" class="invite-invalid">
+                    <div class="invite-icon">✨</div>
+                    <h1 class="invite-title">Welcome to AetherFlow</h1>
+                    <p class="invite-subtitle">
+                        Join thousands of users who are already enhancing their AI workflows with AetherFlow's powerful prompt management tools.
+                    </p>
+                    
+                    <div class="product-preview">
+                        <h3>Discover what AetherFlow offers:</h3>
+                        <ul class="feature-list">
+                            <li>✨ Smart prompt organization system</li>
+                            <li>🚀 AI-powered prompt optimization</li>
+                            <li>⚡ Quick prompt insertion anywhere</li>
+                            <li>☁️ Cross-device synchronization</li>
+                            <li>📚 Curated prompt library</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="signup-section">
+                        <h2 class="signup-title">Start Your Journey</h2>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                            Join our community and start organizing your AI prompts today.
+                        </p>
+                        
+                        <div class="auth-buttons">
+                            <button id="google-signup-btn-fallback" class="google-btn">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                                Sign up with Google
+                            </button>
+                            <button id="email-signup-btn-fallback" class="email-signup-btn">
+                                Sign up with Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 注册成功状态 -->
+                <div id="success-state" class="success-state">
+                    <div class="success-icon">✅</div>
+                    <h1 class="invite-title">Welcome to AetherFlow!</h1>
+                    <p class="invite-subtitle">
+                        Your account has been created successfully. <span id="reward-message">You've received 3 days of Pro membership!</span>
+                    </p>
+                    
+                    <div class="download-section">
+                        <h3>Next Steps:</h3>
+                        <ol style="text-align: left; margin-left: 20px;">
+                            <li style="margin-bottom: 12px;">
+                                <strong>Install the Chrome Extension:</strong><br>
+                                <a href="https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki" 
+                                   class="btn btn-primary" target="_blank" style="margin-top: 8px; display: inline-block;">
+                                   Download from Chrome Web Store
+                                </a>
+                            </li>
+                            <li style="margin-bottom: 12px;">
+                                <strong>Sign in to the extension</strong> with the same account you just created
+                            </li>
+                            <li>
+                                <strong>Start organizing your AI prompts!</strong> Your Pro features are already active.
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <a href="index.html" class="btn btn-outline">Learn More About AetherFlow</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AetherFlow</h2>
+                    <p>Enhancing your AI experience</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-links-section">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="pricing.html">Pricing</a></li>
+                            <li><a href="contact.html">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-links-section">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="terms-of-service.html">Terms of Service</a></li>
+                            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                            <li><a href="refund-policy.html">Refund Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 AetherFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 引入现有的auth.js -->
+    <script src="js/auth.js"></script>
+    <!-- 邀请页面专用逻辑 -->
+    <script src="js/invite.js"></script>
+    
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initFirebase();
+            setupAuthUI();
+            initInvitePage();
+        });
+    </script>
+</body>
+</html> 
