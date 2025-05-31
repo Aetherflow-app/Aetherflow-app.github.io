@@ -120,27 +120,32 @@ function showSuccessState(hasRewards = false) {
     console.log('[Invite] 显示成功状态, 有奖励:', hasRewards);
     
     const container = document.getElementById('invite-container');
-    if (hasRewards) {
-        container.innerHTML = `
-            <div class="success-state">
-                <h1>🎉 Welcome to AetherFlow!</h1>
-                <p>Your account has been created successfully!</p>
-                <div class="reward-info">
-                    <h3>🎁 Welcome Bonus</h3>
-                    <p>You've received <strong>3 days of Pro membership</strong> as a welcome gift!</p>
-                    <p>Your rewards are being processed and will be available shortly.</p>
+    if (container) {
+        if (hasRewards) {
+            container.innerHTML = `
+                <div class="success-state">
+                    <h1>🎉 Welcome to AetherFlow!</h1>
+                    <p>Your account has been created successfully!</p>
+                    <div class="reward-info">
+                        <h3>🎁 Welcome Bonus</h3>
+                        <p>You've received <strong>3 days of Pro membership</strong> as a welcome gift!</p>
+                        <p>Your rewards are being processed and will be available shortly.</p>
+                    </div>
+                    <a href="index.html" class="btn btn-primary">Get Started</a>
                 </div>
-                <a href="index.html" class="btn btn-primary">Get Started</a>
-            </div>
-        `;
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="success-state">
+                    <h1>✅ Welcome to AetherFlow!</h1>
+                    <p>Your account has been created successfully!</p>
+                    <a href="index.html" class="btn btn-primary">Get Started</a>
+                </div>
+            `;
+        }
     } else {
-        container.innerHTML = `
-            <div class="success-state">
-                <h1>✅ Welcome to AetherFlow!</h1>
-                <p>Your account has been created successfully!</p>
-                <a href="index.html" class="btn btn-primary">Get Started</a>
-            </div>
-        `;
+        console.error('[Invite] UI Error: invite-container not found when trying to show success state.');
+        alert('Registration successful! Welcome to AetherFlow.');
     }
 }
 
@@ -326,45 +331,30 @@ async function handleInviteRewards(user, batch, timestamp) {
             inviteCode: inviteCode,
             invitedEmail: user.email,
             createdAt: timestamp,
-            status: 'completed',
+            status: 'completed', // 初始状态，可由后端更新
             ipAddress: await getClientIP()
         });
         
-        // 2. 检查邀请人任务状态和限制
-        const shouldUpdateInviterTask = await checkInviterEligibility(inviterUserId);
+        // TODO: 后端处理 - 检查邀请人任务状态和限制
+        // const shouldUpdateInviterTask = await checkInviterEligibility(inviterUserId);
+        // if (shouldUpdateInviterTask) {
+        //     // 更新邀请人的任务状态的逻辑也应移至后端
+        //     // const inviterTaskRef = db.collection('users').doc(inviterUserId)
+        //     //     .collection('rewards_tasks').doc('friendInvite');
+        //     // ... (获取当前进度并更新) ...
+        //     // batch.set(inviterTaskRef, { ... }, { merge: true });
+        //     console.warn('[Invite] 更新邀请人任务状态的逻辑需要在后端实现。');
+        // }
         
-        if (shouldUpdateInviterTask) {
-            // 3. 更新邀请人的任务状态
-            const inviterTaskRef = db.collection('users').doc(inviterUserId)
-                .collection('rewards_tasks').doc('friendInvite');
-            
-            // 获取当前进度
-            const currentTaskDoc = await inviterTaskRef.get();
-            let currentProgress = 0;
-            
-            if (currentTaskDoc.exists) {
-                currentProgress = currentTaskDoc.data().progress || 0;
-            }
-            
-            // 更新任务状态
-            batch.set(inviterTaskRef, {
-                completed: true,
-                progress: currentProgress + 1,
-                maxProgress: 5,
-                completedAt: timestamp,
-                claimed: false
-            }, { merge: true });
-            
-            console.log('[Invite] 已更新邀请人任务状态，进度:', currentProgress + 1);
-        }
-        
-        // 4. 给被邀请人发放欢迎奖励
+        // 2. 给被邀请人发放欢迎奖励 (写入队列)
         await addWelcomeBonusToQueue(user.uid, batch, timestamp);
         
     } catch (error) {
-        console.error('[Invite] 处理邀请奖励时出错:', error);
-        // 即使邀请奖励处理失败，也要给被邀请人发放基础奖励
-        await addWelcomeBonusToQueue(user.uid, batch, timestamp);
+        console.error('[Invite] 处理邀请奖励时出错 (前端部分):', error);
+        // 即使邀请奖励处理失败，也要确保被邀请人的奖励队列写入尝试过
+        // 错误可能来自 getClientIP 或其他意外情况
+        // 重要的是核心用户数据写入成功
+        await addWelcomeBonusToQueue(user.uid, batch, timestamp); // 再次尝试确保队列写入
     }
 }
 
@@ -372,34 +362,12 @@ async function handleInviteRewards(user, batch, timestamp) {
  * 检查邀请人是否符合奖励条件
  */
 async function checkInviterEligibility(inviterUserId) {
-    console.log('[Invite] 检查邀请人奖励资格');
-    
-    try {
-        const db = firebase.firestore();
-        
-        // 检查邀请人任务完成次数
-        const taskDoc = await db.collection('users').doc(inviterUserId)
-            .collection('rewards_tasks').doc('friendInvite').get();
-        
-        let currentProgress = 0;
-        if (taskDoc.exists) {
-            currentProgress = taskDoc.data().progress || 0;
-        }
-        
-        // 检查是否超过5次限制
-        if (currentProgress >= 5) {
-            console.log('[Invite] 邀请人已达到最大邀请次数限制');
-            return false;
-        }
-        
-        // TODO: 可以在这里添加IP限制检查等其他防刷机制
-        
-        return true;
-        
-    } catch (error) {
-        console.error('[Invite] 检查邀请人资格时出错:', error);
-        return false;
-    }
+    console.log('[Invite] 检查邀请人奖励资格 - 前端占位');
+    // TODO: 将此逻辑移至受信任的后端环境 (Cloud Function/Run)
+    // 前端不应直接查询其他用户的私有数据或任务状态以进行资格检查
+    // 暂时总是返回true，以便流程继续，后端将进行实际验证
+    console.warn('[Invite] checkInviterEligibility 在前端被跳过，依赖后端验证邀请人资格。');
+    return true; 
 }
 
 /**
