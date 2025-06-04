@@ -20,7 +20,8 @@ const MIME_TYPES = {
     '.woff2': 'font/woff2',
     '.ttf': 'font/ttf',
     '.otf': 'font/otf',
-    '.eot': 'application/vnd.ms-fontobject'
+    '.eot': 'application/vnd.ms-fontobject',
+    '.mp4': 'video/mp4'
 };
 
 const server = http.createServer((req, res) => {

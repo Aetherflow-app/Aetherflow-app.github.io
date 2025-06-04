@@ -159,3 +159,96 @@ function applyToastStyles(toastElement) {
         subtitle.style.margin = '2px 0 0 0'; // 重置可能的默认边距
     }
 } 
+
+// 卡片悬停增强效果
+function enhanceCardInteractions() {
+    // 增强价值卡片交互效果
+    const valueCards = document.querySelectorAll('.value-card');
+    valueCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px)';
+            this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+            this.style.boxShadow = '';
+        });
+    });
+    
+    // 增强定价卡片交互效果
+    const pricingCards = document.querySelectorAll('.pricing-card');
+    pricingCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            if (this.classList.contains('premium')) {
+                this.style.transform = 'scale(1.07) translateY(-5px)';
+            } else {
+                this.style.transform = 'translateY(-10px)';
+            }
+            this.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = this.classList.contains('premium') ? 'scale(1.05)' : '';
+            this.style.boxShadow = '';
+        });
+    });
+}
+
+// 平滑滚动导航
+function enhanceSmoothScrolling() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const target = document.querySelector(targetId);
+            if (target) {
+                e.preventDefault();
+                const headerHeight = document.querySelector('header').offsetHeight;
+                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 20;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+}
+
+// 滚动时增强导航栏视觉效果
+function enhanceNavbarOnScroll() {
+    const header = document.querySelector('header');
+    const logo = document.querySelector('.logo h1');
+    const logoIcon = document.querySelector('.logo-icon');
+    
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+            header.style.padding = '0.5rem 0';
+            logo.style.fontSize = '1.5rem';
+            if (logoIcon) logoIcon.style.width = '28px';
+        } else {
+            header.style.boxShadow = '';
+            header.style.padding = '';
+            logo.style.fontSize = '';
+            if (logoIcon) logoIcon.style.width = '';
+        }
+    });
+}
+
+// 初始化所有UI增强功能
+document.addEventListener('DOMContentLoaded', function() {
+    enhanceCardInteractions();
+    enhanceSmoothScrolling();
+    enhanceNavbarOnScroll();
+    
+    // GIF加载优化
+    const gifImages = document.querySelectorAll('.demo-gif-large img');
+    gifImages.forEach(img => {
+        img.addEventListener('load', function() {
+            this.parentElement.classList.add('loaded');
+        });
+    });
+}); 

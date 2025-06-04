@@ -379,7 +379,9 @@
             const environment = envParam || localStorage.getItem('aetherflow_env') || 'production';
             
             // 使用Chrome扩展消息机制
-            const extensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 正式扩展ID
+            // 支持两个扩展ID：测试环境和生产环境
+            const testExtensionId = 'ldpadjcdbfndeghcklogoppmbnmphbki'; // 测试环境ID
+            const prodExtensionId = 'blphakmcnfdnmmbnakmceflegabgdhjk'; // 正式环境ID
             
             // 准备消息数据
             const messageData = {
@@ -395,28 +397,67 @@
             
             // 尝试发送消息到扩展
             if (typeof chrome !== 'undefined' && chrome.runtime) {
-                chrome.runtime.sendMessage(extensionId, messageData, function(response) {
-                    if (chrome.runtime.lastError) {
-                        console.log('发送消息到扩展失败:', chrome.runtime.lastError);
-                        updateStatusMessage('与扩展通信失败，请稍后在扩展中检查会员状态');
-                        savePaymentDataToLocalStorage(checkoutId, planType);
-                    } else if (response && response.success) {
-                        console.log('成功与扩展通信:', response);
-                        updateStatusMessage('支付成功！会员状态已更新');
-                        // 成功后可以清除本地存储的支付数据
-                        clearSavedPaymentData();
+                // 尝试发送到当前活跃的扩展ID (生产或测试)
+                let successfullyMessaged = false;
+                
+                // 先尝试生产环境ID
+                tryMessageToExtension(prodExtensionId, messageData, function(success, response) {
+                    if (success) {
+                        successfullyMessaged = true;
+                        handleSuccessResponse(response);
                     } else {
-                        console.log('扩展返回错误:', response);
-                        const errorMessage = response?.error === 'USER_NOT_AUTHENTICATED' 
-                            ? '用户未登录，请在扩展中登录后会员状态将自动更新'
-                            : '更新会员状态失败，请在扩展中检查';
-                        updateStatusMessage(errorMessage);
-                        savePaymentDataToLocalStorage(checkoutId, planType);
+                        // 如果生产环境ID失败，尝试测试环境ID
+                        console.log('尝试发送到测试环境扩展...');
+                        tryMessageToExtension(testExtensionId, messageData, function(success, response) {
+                            if (success) {
+                                handleSuccessResponse(response);
+                            } else {
+                                console.log('两个扩展ID都无法通信');
+                                updateStatusMessage('与扩展通信失败，请稍后在扩展中检查会员状态');
+                                savePaymentDataToLocalStorage(checkoutId, planType);
+                            }
+                        });
                     }
                 });
             } else {
                 console.log('Chrome API不可用，保存到localStorage等待稍后处理');
                 updateStatusMessage('浏览器扩展无法访问，请打开扩展继续');
+                savePaymentDataToLocalStorage(checkoutId, planType);
+            }
+        }
+        
+        // 尝试向特定扩展ID发送消息
+        function tryMessageToExtension(extensionId, messageData, callback) {
+            try {
+                chrome.runtime.sendMessage(extensionId, messageData, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log(`发送消息到扩展ID ${extensionId} 失败:`, chrome.runtime.lastError);
+                        callback(false);
+                    } else if (response && response.success) {
+                        console.log(`成功与扩展ID ${extensionId} 通信:`, response);
+                        callback(true, response);
+                    } else {
+                        console.log(`扩展ID ${extensionId} 返回错误:`, response);
+                        callback(true, response); // 仍然视为通信成功，只是有业务逻辑错误
+                    }
+                });
+            } catch (error) {
+                console.error(`尝试发送消息到扩展ID ${extensionId} 时出错:`, error);
+                callback(false);
+            }
+        }
+
+        // 处理成功响应
+        function handleSuccessResponse(response) {
+            if (response && response.success) {
+                updateStatusMessage('支付成功！会员状态已更新');
+                // 成功后可以清除本地存储的支付数据
+                clearSavedPaymentData();
+            } else {
+                const errorMessage = response?.error === 'USER_NOT_AUTHENTICATED' 
+                    ? '用户未登录，请在扩展中登录后会员状态将自动更新'
+                    : '更新会员状态失败，请在扩展中检查';
+                updateStatusMessage(errorMessage);
                 savePaymentDataToLocalStorage(checkoutId, planType);
             }
         }
@@ -465,8 +506,8 @@
                         // 如果按钮URL不是扩展URL，阻止默认行为
                         if (!button.href.includes('chrome-extension://')) {
                             e.preventDefault();
-                            // 在新标签打开Chrome商店页面
-                            window.open('https://chrome.google.com/webstore/detail/aetherflow/ldpadjcdbfndeghcklogoppmbnmphbki', '_blank');
+                            // 在新标签打开Chrome商店页面 - 使用生产环境ID
+                            window.open('https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk', '_blank');
                         }
                     });
                 }
