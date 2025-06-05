@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://aetherflow-app.com/</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/pricing.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/contact.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/video-demo.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/rIrv8omQpvM/mqdefault.jpg</video:thumbnail_loc>
+      <video:title>Aetherflow Demo: Your Complete AI Prompt Toolkit in Action</video:title>
+      <video:description>Aetherflow is your all-in-one solution for managing AI prompts across platforms like ChatGPT, Claude, and Gemini. This video demonstrates how to save prompts with one click, quickly access your prompt library, and optimize your prompts for better results.</video:description>
+      <video:content_loc>https://www.youtube.com/watch?v=rIrv8omQpvM</video:content_loc>
+      <video:player_loc>https://www.youtube.com/embed/rIrv8omQpvM</video:player_loc>
+      <video:duration>150</video:duration>
+      <video:publication_date>2024-06-01T08:00:00+08:00</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:live>no</video:live>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/terms-of-service.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/privacy-policy.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://aetherflow-app.com/refund-policy.html</loc>
+    <lastmod>2024-06-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset> 
