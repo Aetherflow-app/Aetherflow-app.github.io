@@ -178,9 +178,8 @@
                     <h2>Experience a More Convenient Prompt Hub</h2>
                     <p>Install the extension and get the full power of our prompt library.</p>
                     <div class="demo-gif-large">
-                         <video autoplay loop muted playsinline>
+                         <video autoplay loop muted playsinline poster="/assets/prompt-library.gif">
                             <source src="/assets/prompt-library.mp4" type="video/mp4">
-                            <img src="/assets/prompt-library.gif" alt="Prompt Library Feature Demo in Aetherflow Extension">
                         </video>
                     </div>
                     <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome - It's Free</a>
@@ -204,6 +203,14 @@
             let allPrompts = [];
             let currentIndex = 0;
             const promptsPerPage = 20;
+
+            // Start all videos automatically
+            document.querySelectorAll('video').forEach(vid => {
+                vid.play().catch(error => {
+                    // Autoplay was prevented.
+                    console.log("Video autoplay was prevented:", error);
+                });
+            });
 
             // Fetch prompts from the local JSON file
             fetch('/data/recommendedPrompts.json')

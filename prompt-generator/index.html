@@ -155,9 +155,8 @@
                     <h2>See the Full Power in Action</h2>
                     <p>The Aetherflow extension offers multiple optimization modes and pro-level features.</p>
                     <div class="demo-gif-large">
-                         <video autoplay loop muted playsinline>
+                         <video autoplay loop muted playsinline poster="/assets/quick-optimize.gif">
                             <source src="/assets/quick-optimize.mp4" type="video/mp4">
-                            <img src="/assets/quick-optimize.gif" alt="Prompt optimization feature demo">
                         </video>
                     </div>
                     <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome</a>
@@ -182,6 +181,14 @@
             const usageKey = 'aetherflow_generator_usage';
             const maxUsage = 3;
             const apiUrl = 'https://ai-proxy-service-423266303314.us-west2.run.app/api/proxy/qwen';
+
+            // Start all videos automatically
+            document.querySelectorAll('video').forEach(vid => {
+                vid.play().catch(error => {
+                    // Autoplay was prevented.
+                    console.log("Video autoplay was prevented:", error);
+                });
+            });
 
             function checkUsage() {
                 const currentUsage = parseInt(localStorage.getItem(usageKey) || '0', 10);
@@ -216,8 +223,8 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            content: content,
-                            mode: 'universal' // As per requirement
+                            prompt: content,
+                            mode: 'universal'
                         }),
                     });
 
