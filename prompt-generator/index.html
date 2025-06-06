@@ -247,7 +247,20 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            content: content
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "Please optimize the following prompt to be clearer, more specific, and effective, while maintaining the original intent. You can add details or adjust the structure as appropriate."
+                                },
+                                {
+                                    role: "user",
+                                    content: content
+                                }
+                            ],
+                            temperature: 0.5,
+                            max_tokens: 1000,
+                            top_p: 0.9,
+                            stream: false
                         }),
                     });
 
@@ -259,7 +272,13 @@
                     }
 
                     const data = await response.json();
-                    promptOutput.value = data.optimized_content || 'Sorry, we couldn\'t optimize this prompt. Please try a different one.';
+                    
+                    // Extract the content from the response in the same way as the extension
+                    const optimizedContent = data.choices && data.choices[0] && data.choices[0].message 
+                        ? data.choices[0].message.content 
+                        : null;
+
+                    promptOutput.value = optimizedContent || 'Sorry, we couldn\'t optimize this prompt. Please try a different one.';
                     
                     // Increment usage on successful generation
                     const currentUsage = parseInt(localStorage.getItem(usageKey) || '0', 10);
