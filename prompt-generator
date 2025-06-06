@@ -38,6 +38,22 @@
             font-size: 1.1rem;
             margin-bottom: 1.5rem;
         }
+        .conversion-banner .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        .conversion-banner .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        }
         .generator-tool {
             background-color: #fff;
             padding: 40px;
@@ -120,7 +136,7 @@
                 <div class="conversion-banner">
                     <h2>Unlock Unlimited Optimizations</h2>
                     <p>Install the Aetherflow extension to get unlimited access and even more powerful features.</p>
-                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary" style="background-color: white; color: #667eea;">Install for Free</a>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome</a>
                 </div>
                 
                 <!-- Core Feature: Generator Tool -->
@@ -144,7 +160,7 @@
                             <img src="assets/quick-optimize.gif" alt="Prompt optimization feature demo">
                         </video>
                     </div>
-                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Get Aetherflow on Chrome Store</a>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome</a>
                 </div>
             </div>
         </section>

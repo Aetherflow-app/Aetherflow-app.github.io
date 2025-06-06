@@ -42,9 +42,25 @@
             font-size: 1.1rem;
             margin-bottom: 1.5rem;
         }
+        .conversion-banner .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        .conversion-banner .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        }
         .prompt-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
             margin-bottom: 40px;
         }
@@ -65,8 +81,18 @@
         .prompt-card-title {
             font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             color: #1f2937;
+        }
+        .prompt-card-preview {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .prompt-card-actions {
             display: flex;
@@ -135,7 +161,7 @@
                 <div class="conversion-banner">
                     <h2>Get All 150+ Professional Prompts for Free!</h2>
                     <p>Install the Aetherflow extension to get instant access to the complete library with one click.</p>
-                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary" style="background-color: white; color: #667eea;">Install Now</a>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome</a>
                 </div>
 
                 <!-- 2. Core Feature: Prompt List -->
@@ -157,7 +183,7 @@
                             <img src="assets/prompt-library.gif" alt="Prompt Library Feature Demo in Aetherflow Extension">
                         </video>
                     </div>
-                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Install for Free on Chrome Store</a>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Add to Chrome - It's Free</a>
                 </div>
             </div>
         </section>
@@ -198,8 +224,17 @@
                 promptsToLoad.forEach(prompt => {
                     const card = document.createElement('div');
                     card.className = 'prompt-card';
+                    
+                    // Get preview text (first 150 characters)
+                    const preview = prompt.content.length > 150 
+                        ? prompt.content.substring(0, 150) + '...' 
+                        : prompt.content;
+                    
                     card.innerHTML = `
-                        <p class="prompt-card-title">${prompt.title}</p>
+                        <div>
+                            <div class="prompt-card-title">${prompt.title}</div>
+                            <div class="prompt-card-preview">${preview}</div>
+                        </div>
                         <div class="prompt-card-actions">
                             <button class="copy-btn" data-content="${escape(prompt.content)}">Copy</button>
                         </div>
