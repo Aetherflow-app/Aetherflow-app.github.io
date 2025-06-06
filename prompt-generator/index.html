@@ -238,6 +238,9 @@
                 promptOutput.value = '';
 
                 try {
+                    // Log the content being sent
+                    console.log('Sending content to API:', content);
+
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
@@ -249,7 +252,10 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error(`API error: ${response.statusText}`);
+                        // Try to parse error message from response body
+                        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                        console.error('API response error:', response.status, errorData);
+                        throw new Error(`API error: ${errorData.message || response.statusText}`);
                     }
 
                     const data = await response.json();
