@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Generator & Optimizer | Aetherflow</title>
+    <meta name="description" content="Instantly generate and optimize your AI prompts. Use our free tool to create more effective, clear, and powerful prompts for any AI model. Get better results with Aetherflow.">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .prompt-generator-section {
+            padding: 60px 0;
+        }
+        .conversion-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 40px;
+        }
+        .conversion-banner h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .conversion-banner p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        .generator-tool {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+        }
+        .generator-tool h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            color: #1f2937;
+        }
+        .generator-tool textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        .generator-tool .btn-container {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        #usage-limit-message {
+            text-align: center;
+            color: #ef4444;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+        .demo-module {
+            text-align: center;
+            margin-top: 80px;
+            padding: 60px 20px;
+            background-color: #f9fafb;
+            border-radius: 12px;
+        }
+        .demo-module h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+         .demo-module video, .demo-module img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="assets/logo-P-svg.svg" alt="Aetherflow Logo" class="logo-icon">
+                <h1>Aetherflow</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="terms-of-service.html">Terms</a></li>
+                    <li><a href="privacy-policy.html">Privacy</a></li>
+                    <li><a href="refund-policy.html">Refunds</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="#" id="auth-button" class="auth-button">Sign in</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="prompt-generator-section">
+            <div class="container">
+                <!-- Top Conversion Banner -->
+                <div class="conversion-banner">
+                    <h2>Unlock Unlimited Optimizations</h2>
+                    <p>Install the Aetherflow extension to get unlimited access and even more powerful features.</p>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary" style="background-color: white; color: #667eea;">Install for Free</a>
+                </div>
+                
+                <!-- Core Feature: Generator Tool -->
+                <div class="generator-tool">
+                    <h2>Free AI Prompt Optimizer</h2>
+                    <textarea id="prompt-input" placeholder="Enter your idea or keywords here... e.g., 'A marketing slogan for a new coffee shop'"></textarea>
+                    <div class="btn-container">
+                        <button id="generate-btn" class="btn btn-primary">Generate Optimized Prompt</button>
+                    </div>
+                    <textarea id="prompt-output" placeholder="Your optimized prompt will appear here..." readonly></textarea>
+                    <div id="usage-limit-message" style="display: none;"></div>
+                </div>
+
+                <!-- Bottom Demo & Conversion Module -->
+                <div class="demo-module">
+                    <h2>See the Full Power in Action</h2>
+                    <p>The Aetherflow extension offers multiple optimization modes and pro-level features.</p>
+                    <div class="demo-gif-large">
+                         <video autoplay loop muted playsinline>
+                            <source src="assets/quick-optimize.mp4" type="video/mp4">
+                            <img src="assets/quick-optimize.gif" alt="Prompt optimization feature demo">
+                        </video>
+                    </div>
+                    <a href="https://chrome.google.com/webstore/detail/aetherflow/blphakmcnfdnmmbnakmceflegabgdhjk" class="btn btn-primary">Get Aetherflow on Chrome Store</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Aetherflow. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generate-btn');
+            const promptInput = document.getElementById('prompt-input');
+            const promptOutput = document.getElementById('prompt-output');
+            const usageLimitMessage = document.getElementById('usage-limit-message');
+
+            const usageKey = 'aetherflow_generator_usage';
+            const maxUsage = 3;
+            const apiUrl = 'https://ai-proxy-service-423266303314.us-west2.run.app/api/proxy/qwen';
+
+            function checkUsage() {
+                const currentUsage = parseInt(localStorage.getItem(usageKey) || '0', 10);
+                if (currentUsage >= maxUsage) {
+                    promptInput.disabled = true;
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = 'Usage Limit Reached';
+                    usageLimitMessage.textContent = 'You have used all your free generations. Please install the extension for unlimited use.';
+                    usageLimitMessage.style.display = 'block';
+                    return false;
+                }
+                return true;
+            }
+
+            async function handleGeneration() {
+                if (!checkUsage()) return;
+
+                const content = promptInput.value.trim();
+                if (!content) {
+                    promptOutput.value = 'Please enter some text to get started.';
+                    return;
+                }
+
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Optimizing...';
+                promptOutput.value = '';
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            content: content,
+                            mode: 'universal' // As per requirement
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    promptOutput.value = data.optimized_content || 'Sorry, we couldn\'t optimize this prompt. Please try a different one.';
+                    
+                    // Increment usage on successful generation
+                    const currentUsage = parseInt(localStorage.getItem(usageKey) || '0', 10);
+                    localStorage.setItem(usageKey, (currentUsage + 1).toString());
+
+                } catch (error) {
+                    console.error('Generation failed:', error);
+                    promptOutput.value = 'An error occurred. Please try again later.';
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate Optimized Prompt';
+                    checkUsage(); // Re-check to disable if limit is now reached
+                }
+            }
+            
+            generateBtn.addEventListener('click', handleGeneration);
+            
+            // Initial check when the page loads
+            checkUsage();
+        });
+    </script>
+</body>
+</html> 
