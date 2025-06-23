@@ -2,9 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Force HTTPS and non-WWW redirection for canonical URL
+      const canonicalHostname = "aetherflow-app.com";
+      const currentHostname = window.location.hostname;
+      const isHttp = window.location.protocol === "http:";
+      const isWww = currentHostname.startsWith("www.");
+
+      if (isHttp || isWww) {
+        let newUrl = "https://";
+        newUrl += isWww ? currentHostname.substring(4) : currentHostname;
+        newUrl += window.location.pathname;
+        newUrl += window.location.search;
+        newUrl += window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Demo | Aetherflow</title>
-    <meta name="description" content="Watch a live demo of Aetherflow in action. See how our AI prompt assistant helps you manage, optimize, and generate prompts to improve your workflow and get better results.">
+    <meta name="description" content="Watch a video demonstration of Aetherflow's key features. See how our AI prompt assistant can help you manage, optimize, and generate prompts more efficiently.">
     
     <link rel="canonical" href="https://aetherflow-app.com/video-demo.html" />
 
@@ -40,6 +56,8 @@
       }
     }
     </script>
+
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- 导航栏 -->
@@ -195,6 +213,6 @@
     </footer>
 
     <!-- 添加所需的JS -->
-    <script src="js/lazy-load.js"></script>
+    <script defer src="js/lazy-load.js"></script>
 </body>
 </html> 

@@ -2,6 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Force HTTPS and non-WWW redirection for canonical URL
+      const canonicalHostname = "aetherflow-app.com";
+      const currentHostname = window.location.hostname;
+      const isHttp = window.location.protocol === "http:";
+      const isWww = currentHostname.startsWith("www.");
+
+      if (isHttp || isWww) {
+        let newUrl = "https://";
+        newUrl += isWww ? currentHostname.substring(4) : currentHostname;
+        newUrl += window.location.pathname;
+        newUrl += window.location.search;
+        newUrl += window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing Plans | Aetherflow</title>
     <meta name="description" content="Choose the best plan for your needs. Aetherflow offers flexible pricing options, including a free plan and affordable Pro and Annual subscriptions for advanced features.">
@@ -17,11 +33,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入Paddle.js -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <script defer src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
     
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 </head>
 <body>
     <header>

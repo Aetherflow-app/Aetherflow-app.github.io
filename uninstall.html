@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Force HTTPS and non-WWW redirection for canonical URL
+      const canonicalHostname = "aetherflow-app.com";
+      const currentHostname = window.location.hostname;
+      const isHttp = window.location.protocol === "http:";
+      const isWww = currentHostname.startsWith("www.");
+
+      if (isHttp || isWww) {
+        let newUrl = "https://";
+        newUrl += isWww ? currentHostname.substring(4) : currentHostname;
+        newUrl += window.location.pathname;
+        newUrl += window.location.search;
+        newUrl += window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sorry to see you go - AetherFlow</title>
+    <link rel="canonical" href="https://aetherflow-app.com/uninstall.html" />
     <link rel="stylesheet" href="styles.css">
     <style>
         .uninstall-container {

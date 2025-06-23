@@ -2,9 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Force HTTPS and non-WWW redirection for canonical URL
+      const canonicalHostname = "aetherflow-app.com";
+      const currentHostname = window.location.hostname;
+      const isHttp = window.location.protocol === "http:";
+      const isWww = currentHostname.startsWith("www.");
+
+      if (isHttp || isWww) {
+        let newUrl = "https://";
+        newUrl += isWww ? currentHostname.substring(4) : currentHostname;
+        newUrl += window.location.pathname;
+        newUrl += window.location.search;
+        newUrl += window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy | Aetherflow</title>
-    <meta name="description" content="Review the Aetherflow Privacy Policy to understand how we collect, use, and protect your personal data when you use our services.">
+    <meta name="description" content="Read the Aetherflow privacy policy to understand how we collect, use, and protect your personal information.">
 
     <link rel="canonical" href="https://aetherflow-app.com/privacy-policy.html" />
 

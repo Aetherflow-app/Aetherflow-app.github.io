@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Force HTTPS and non-WWW redirection for canonical URL
+      const canonicalHostname = "aetherflow-app.com";
+      const currentHostname = window.location.hostname;
+      const isHttp = window.location.protocol === "http:";
+      const isWww = currentHostname.startsWith("www.");
+
+      if (isHttp || isWww) {
+        let newUrl = "https://";
+        newUrl += isWww ? currentHostname.substring(4) : currentHostname;
+        newUrl += window.location.pathname;
+        newUrl += window.location.search;
+        newUrl += window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - AetherFlow</title>
+    <link rel="canonical" href="https://aetherflow-app.com/success.html" />
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

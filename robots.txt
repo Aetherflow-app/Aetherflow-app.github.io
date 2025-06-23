@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aetherflow-app.com/sitemap.xml 
